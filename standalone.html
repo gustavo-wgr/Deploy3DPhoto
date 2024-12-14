@@ -73,9 +73,6 @@
   nonVrCameraPosition.copy(camera.position);
   nonVrCameraRotation.copy(camera.rotation);
   matrixCam.copy(camera.matrix);
-  // console.log(camera)
-
-
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
@@ -85,9 +82,6 @@
         user.fov = maxFov;
         camera.updateProjectionMatrix(); // Update projection matrix
       } else {
-        // Store current camera position and rotation for non-VR mode
-        console.log("after: " + camera)
-
         // camera.aspect = data.Width / data.Height;
         if(camera.fov !== maxFov) {
           camera.fov = maxFov;
