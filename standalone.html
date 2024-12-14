@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>WebXR with Three.js - Zoomed In Initial View</title>
+  <title>Immersive Autochromes</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
   <style>
     body { margin: 0; overflow: hidden; }
     #container { width: 100%; height: 100vh; }
     #info { position: absolute; top: 10px; left: 10px; color: white; }
+    #VRButton{z-index: 99999 !important;}
   </style>
   <script type="importmap">
         {
@@ -41,7 +42,8 @@
   renderer.setClearColor(0x808080);
   renderer.xr.enabled = true;
 
-  document.body.appendChild(VRButton.createButton(renderer));
+  const vrButton = VRButton.createButton(renderer);
+  document.body.appendChild(vrButton);
   document.getElementById('container').appendChild(renderer.domElement);
 
   const loader = new GLTFLoader();
@@ -67,27 +69,40 @@
   let direction = 1;
   let nonVrCameraPosition = new THREE.Vector3();
   let nonVrCameraRotation = new THREE.Euler();
+  let matrixCam = new THREE.Matrix4();
+  nonVrCameraPosition.copy(camera.position);
+  nonVrCameraRotation.copy(camera.rotation);
+  matrixCam.copy(camera.matrix);
+  // console.log(camera)
+
 
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
         // Set camera position and rotation to match non-VR
+        console.log(camera);
         user.position.set(0,-1.6,-0.002650000000000002);
-        // user.rotation.copy(nonVrCameraRotation);
-        user.fov = maxFov; // Maintain max FOV
+        user.fov = maxFov;
         camera.updateProjectionMatrix(); // Update projection matrix
       } else {
         // Store current camera position and rotation for non-VR mode
-        nonVrCameraPosition.copy(camera.position);
-        nonVrCameraRotation.copy(camera.rotation);
+        console.log("after: " + camera)
 
-        user.position.set(0, 0, 0);
+        // camera.aspect = data.Width / data.Height;
+        if(camera.fov !== maxFov) {
+          camera.fov = maxFov;
+          camera.position.copy(nonVrCameraRotation);
+          camera.rotation.copy(nonVrCameraRotation);
+          camera.matrix.copy(matrixCam);
+          user.position.set(0, 0, 0);
+        }
         cameraZOffset += direction * 0.00005;
         if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
           direction *= -1;
         }
         camera.position.z = -cameraZOffset;
       }
+      camera.updateProjectionMatrix();
       renderer.render(scene, camera);
     });
   }
