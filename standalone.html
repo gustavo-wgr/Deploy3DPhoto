@@ -74,7 +74,8 @@
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
-        user.position.set(0.0, -.63, 0.19); // Set position for VR
+        console.log(camera.position)
+        user.position.set(0.0, -camera.position.y, -camera.position.z); // Set position for VR
       } else {
         user.position.set(0, 0, 0); // Set position for non-VR
 
