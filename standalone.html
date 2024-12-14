@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>WebXR with Three.js</title>
+  <title>WebXR with Three.js - Zoomed In Initial View</title>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
   <style>
-    body { margin: 0; }
+    body { margin: 0; overflow: hidden; }
     #container { width: 100%; height: 100vh; }
     #info { position: absolute; top: 10px; left: 10px; color: white; }
   </style>
@@ -21,7 +21,6 @@
 <body>
 <div id="container"></div>
 
-
 <script type="module">
   import * as THREE from 'three';
   import { VRButton } from 'three/addons/webxr/VRButton.js';
@@ -29,7 +28,7 @@
 
   const scene = new THREE.Scene();
   const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
-  const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI);
+  const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI) * 0.65;
 
   const user = new THREE.Group();
   const camera = new THREE.PerspectiveCamera(maxFov, data.Width / data.Height, 0.1, 100);
@@ -66,18 +65,23 @@
   let cameraZOffset = 0;
   const cameraZMaxOffset = 0.025;
   let direction = 1;
+  let nonVrCameraPosition = new THREE.Vector3();
+  let nonVrCameraRotation = new THREE.Euler();
 
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
-        console.log(camera.position);
-        user.position.set(0.0, -1.6, -camera.position.z - 0.05);
-        user.fov = maxFov; // Ensure FOV is set correctly in VR
-        camera.fov = maxFov;
+        // Set camera position and rotation to match non-VR
+        user.position.set(0,-1.6,-0.002650000000000002);
+        // user.rotation.copy(nonVrCameraRotation);
+        user.fov = maxFov; // Maintain max FOV
         camera.updateProjectionMatrix(); // Update projection matrix
       } else {
-        user.position.set(0, 0, 0);
+        // Store current camera position and rotation for non-VR mode
+        nonVrCameraPosition.copy(camera.position);
+        nonVrCameraRotation.copy(camera.rotation);
 
+        user.position.set(0, 0, 0);
         cameraZOffset += direction * 0.00005;
         if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
           direction *= -1;
@@ -88,5 +92,13 @@
     });
   }
 
+  window.addEventListener('resize', () => {
+    camera.aspect = data.Width / data.Height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
   animate();
 </script>
+</body>
+</html>
