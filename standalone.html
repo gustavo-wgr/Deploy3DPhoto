@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>WebXR with Three.js</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <style>
+    body { margin: 0; }
+    #container { width: 100%; height: 100vh; }
+    #info { position: absolute; top: 10px; left: 10px; color: white; }
+  </style>
+  <script type="importmap">
+        {
+           "imports": {
+					"three": "./build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+        }
+    </script>
+</head>
+<body>
+<div id="container"></div>
+
+
+<script type="module">
+  import * as THREE from 'three';
+  import { VRButton } from 'three/addons/webxr/VRButton.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+  const scene = new THREE.Scene();
+
+  const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
+  const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI);
+  const camera = new THREE.PerspectiveCamera(maxFov, data.Width / data.Height, 0.1, 1000);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x808080);
+  renderer.xr.enabled = true;
+
+  document.body.appendChild(VRButton.createButton(renderer));
+  document.getElementById('container').appendChild(renderer.domElement);
+
+  const loader = new GLTFLoader();
+  loader.load('https://cors-anywhere.herokuapp.com/https://owncloud.fraunhofer.de/index.php/s/Prk6zzZsePZwKqI/download', function (gltf) {
+    gltf.scene.rotation.x = Math.PI;
+    gltf.scene.traverse(function (node) {
+      if (node.isMesh) {
+        node.material = new THREE.MeshBasicMaterial({
+          vertexColors: true,
+          transparent: false,
+          opacity: 1.0
+        });
+      }
+    });
+    scene.add(gltf.scene);
+  }, undefined, function (error) {
+    console.error(error);
+  });
+
+  function animate() {
+    renderer.setAnimationLoop(function () {
+      renderer.render(scene, camera);
+    });
+  }
+
+  animate();
+</script>
+</body>
+</html>
