@@ -50,7 +50,6 @@
   document.getElementById('container').appendChild(renderer.domElement);
 
   const loader = new GLTFLoader();
-  // loader.load('https://cors-anywhere.herokuapp.com/https://owncloud.fraunhofer.de/index.php/s/Prk6zzZsePZwKqI/download', function (gltf) {
     loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
     gltf.scene.rotation.x = Math.PI;
     gltf.scene.traverse(function (node) {
@@ -74,7 +73,7 @@
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
-        user.position.set(0, -1.6, 0); // Set position for VR
+        user.position.set(0, -1.6, -3.0); // Set position for VR
       } else {
         user.position.set(0, 0, 0); // Set position for non-VR
 
