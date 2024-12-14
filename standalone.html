@@ -31,7 +31,15 @@
 
   const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
   const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI);
+
+  const user = new THREE.Group(); // Create user group
+
+
   const camera = new THREE.PerspectiveCamera(maxFov, data.Width / data.Height, 0.1, 1000);
+  // camera.position.y = 0; // Set camera height
+
+  user.add(camera); // Add camera to user group
+  scene.add(user); // Add user group to scene
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -43,6 +51,7 @@
 
   const loader = new GLTFLoader();
   loader.load('https://cors-anywhere.herokuapp.com/https://owncloud.fraunhofer.de/index.php/s/Prk6zzZsePZwKqI/download', function (gltf) {
+    // loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
     gltf.scene.rotation.x = Math.PI;
     gltf.scene.traverse(function (node) {
       if (node.isMesh) {
@@ -58,13 +67,29 @@
     console.error(error);
   });
 
+  let cameraZOffset = 0; // Offset for camera movement
+  const cameraZMaxOffset = 0.025; // Maximum offset for movement
+  let direction = 1; // Direction of movement (1 for in, -1 for out)
+
   function animate() {
     renderer.setAnimationLoop(function () {
+      if (renderer.xr.isPresenting) {
+        user.position.set(0, -1.6, 0); // Set position for VR
+      } else {
+        user.position.set(0, 0, 0); // Set position for non-VR
+
+        // Update camera Z position for oscillation
+        cameraZOffset += direction * 0.00005; // Move camera slightly
+        if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
+          direction *= -1; // Reverse direction
+        }
+        camera.position.z = -cameraZOffset; // Apply the new z position (inward movement)
+      }
       renderer.render(scene, camera);
     });
   }
 
   animate();
+
+  animate();
 </script>
-</body>
-</html>
