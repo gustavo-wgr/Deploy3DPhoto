@@ -91,9 +91,9 @@
         user.position.set(0,-1.6,0);
         user.fov = maxFov;
 
-        user.rotation.x = THREE.MathUtils.clamp(camera.rotation.x, -Math.PI / 4, Math.PI / 4); // Limit pitch
-        user.rotation.y = THREE.MathUtils.clamp(camera.rotation.y, -Math.PI / 4, Math.PI / 4); // Limit yaw
-        user.rotation.z = 0; // Optionally restrict roll
+        camera.rotation.x = THREE.MathUtils.clamp(camera.rotation.x, -Math.PI / 4, Math.PI / 4); // Limit pitch
+        camera.rotation.y = THREE.MathUtils.clamp(camera.rotation.y, -Math.PI / 4, Math.PI / 4); // Limit yaw
+        camera.rotation.z = 0; // Optionally restrict roll
         camera.updateProjectionMatrix(); //
       } else {
         // camera.aspect = data.Width / data.Height;
