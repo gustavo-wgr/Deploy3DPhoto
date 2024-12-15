@@ -29,50 +29,69 @@
 
   const scene = new THREE.Scene();
   const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
-  // const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI) * 0.65;
   const maxFov = 90;
 
   const user = new THREE.Group();
-  const camera = new THREE.PerspectiveCamera(maxFov,window.innerWidth/window.innerHeight, 0.1, 100);
-
-
+  const camera = new THREE.PerspectiveCamera(maxFov, window.innerWidth / window.innerHeight, 0.1, 100);
   user.add(camera);
   scene.add(user);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x808080);
+  renderer.setClearColor(0x000000); // Change background to black
   renderer.xr.enabled = true;
 
   const vrButton = VRButton.createButton(renderer);
   document.body.appendChild(vrButton);
   document.getElementById('container').appendChild(renderer.domElement);
 
+
   const loader = new GLTFLoader();
-  loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
-    gltf.scene.rotation.x = Math.PI;
+  const models = [
+    'models/cacdoha_000140_access_crop.glb',
+    'models/cacdoha_000122_access_crop.glb'
+  ];
+  let currentModelIndex = 0;
 
-    const zoomScale = 4.2; // Adjust this value for more or less zoom
-    const clipHeight = 0.1; // Define the height at which to clip the geometry
+  function loadModel(index) {
+    loader.load(models[index], function (gltf) {
+      gltf.scene.rotation.x = Math.PI;
+      const zoomScale = 4.2;
 
-    gltf.scene.traverse(function (node) {
-      if (node.isMesh) {
-        // Scale the geometry of each mesh
-        node.scale.set(zoomScale, zoomScale, 1); // Reset the mesh scale to 1
-
-        // Create a material with clipping
-        node.material = new THREE.MeshBasicMaterial({
-          vertexColors: true,
-          transparent: false,
-          opacity: 1.0
-        });
-        node.frustumCulled = true;
-      }
+      gltf.scene.traverse(function (node) {
+        if (node.isMesh) {
+          node.scale.set(zoomScale, zoomScale, 1);
+          node.material = new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            // opacity: 4.0
+          });
+          node.frustumCulled = true;
+        }
+      });
+      scene.add(gltf.scene);
+    }, undefined, function (error) {
+      console.error(error);
     });
+  }
 
-    scene.add(gltf.scene);
-  }, undefined, function (error) {
-    console.error(error);
+  loadModel(currentModelIndex);
+
+  function changeModel(direction) {
+    scene.clear(); // Clear the current model
+    currentModelIndex += direction;
+    if (currentModelIndex < 0) currentModelIndex = models.length - 1;
+    if (currentModelIndex >= models.length) currentModelIndex = 0;
+    loadModel(currentModelIndex);
+  }
+
+  // Listen for key presses to change models
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') {
+      changeModel(1); // Next model
+    } else if (event.key === 'ArrowLeft') {
+      changeModel(-1); // Previous model
+    }
   });
 
   let cameraZOffset = 0;
@@ -84,25 +103,18 @@
   nonVrCameraPosition.copy(camera.position);
   nonVrCameraRotation.copy(camera.rotation);
   matrixCam.copy(camera.matrix);
+
   function animate() {
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
-        // Set camera position and rotation to match non-VR
-        user.position.set(0,-1.6,0);
-        user.fov = maxFov;
-        // camera.rotation.x = THREE.MathUtils.clamp(camera.rotation.x, -Math.PI / 4, Math.PI / 4); // Limit pitch
-        // camera.rotation.y = THREE.MathUtils.clamp(camera.rotation.y, -Math.PI / 4, Math.PI / 4); // Limit yaw
-        // camera.rotation.z = 0; // Optionally restrict roll
-        camera.updateProjectionMatrix(); //
+        user.position.set(0, -1.6, 0);
+        camera.updateProjectionMatrix();
       } else {
-        // camera.aspect = data.Width / data.Height;
-        // if(camera.fov !== maxFov) {
-          camera.fov = maxFov;
-          camera.position.copy(nonVrCameraRotation);
-          camera.rotation.copy(nonVrCameraRotation);
-          camera.matrix.copy(matrixCam);
-          user.position.set(0, 0, 0);
-        // }
+        camera.fov = maxFov;
+        camera.position.copy(nonVrCameraRotation);
+        camera.rotation.copy(nonVrCameraRotation);
+        camera.matrix.copy(matrixCam);
+        user.position.set(0, 0, 0);
         cameraZOffset += direction * 0.00005;
         if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
           direction *= -1;
