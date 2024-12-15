@@ -52,7 +52,7 @@
   loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
     gltf.scene.rotation.x = Math.PI;
 
-    const zoomScale = 4.5; // Adjust this value for more or less zoom
+    const zoomScale = 4.2; // Adjust this value for more or less zoom
     const clipHeight = 0.1; // Define the height at which to clip the geometry
 
     gltf.scene.traverse(function (node) {
@@ -90,7 +90,11 @@
         // Set camera position and rotation to match non-VR
         user.position.set(0,-1.6,0);
         user.fov = maxFov;
-        camera.updateProjectionMatrix(); // Update projection matrix
+
+        user.rotation.x = THREE.MathUtils.clamp(camera.rotation.x, -Math.PI / 4, Math.PI / 4); // Limit pitch
+        user.rotation.y = THREE.MathUtils.clamp(camera.rotation.y, -Math.PI / 4, Math.PI / 4); // Limit yaw
+        user.rotation.z = 0; // Optionally restrict roll
+        camera.updateProjectionMatrix(); //
       } else {
         // camera.aspect = data.Width / data.Height;
         // if(camera.fov !== maxFov) {
