@@ -29,10 +29,12 @@
 
   const scene = new THREE.Scene();
   const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
-  const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI) * 0.65;
+  // const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI) * 0.65;
+  const maxFov = 90;
 
   const user = new THREE.Group();
-  const camera = new THREE.PerspectiveCamera(maxFov, data.Width / data.Height, 0.1, 100);
+  const camera = new THREE.PerspectiveCamera(maxFov,window.innerWidth/window.innerHeight, 0.1, 100);
+
 
   user.add(camera);
   scene.add(user);
@@ -51,6 +53,9 @@
     gltf.scene.rotation.x = Math.PI;
     gltf.scene.traverse(function (node) {
       if (node.isMesh) {
+        // Optionally, if you want to apply the scale to the mesh as well
+        node.scale.set(4, 4, 1); // Reset the mesh scale to 1 so only geometry is affected
+
         node.material = new THREE.MeshBasicMaterial({
           vertexColors: true,
           transparent: false,
@@ -83,13 +88,13 @@
         camera.updateProjectionMatrix(); // Update projection matrix
       } else {
         // camera.aspect = data.Width / data.Height;
-        if(camera.fov !== maxFov) {
+        // if(camera.fov !== maxFov) {
           camera.fov = maxFov;
           camera.position.copy(nonVrCameraRotation);
           camera.rotation.copy(nonVrCameraRotation);
           camera.matrix.copy(matrixCam);
           user.position.set(0, 0, 0);
-        }
+        // }
         cameraZOffset += direction * 0.00005;
         if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
           direction *= -1;
