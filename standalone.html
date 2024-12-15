@@ -88,7 +88,7 @@
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
         // Set camera position and rotation to match non-VR
-        user.position.set(0,-1.6,-0.002650000000000002);
+        user.position.set(0,-1.6,0);
         user.fov = maxFov;
         camera.updateProjectionMatrix(); // Update projection matrix
       } else {
