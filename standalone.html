@@ -51,11 +51,16 @@
   const loader = new GLTFLoader();
   loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
     gltf.scene.rotation.x = Math.PI;
+
+    const zoomScale = 4.5; // Adjust this value for more or less zoom
+    const clipHeight = 0.1; // Define the height at which to clip the geometry
+
     gltf.scene.traverse(function (node) {
       if (node.isMesh) {
-        // Optionally, if you want to apply the scale to the mesh as well
-        node.scale.set(4, 4, 1); // Reset the mesh scale to 1 so only geometry is affected
+        // Scale the geometry of each mesh
+        node.scale.set(zoomScale, zoomScale, 1); // Reset the mesh scale to 1
 
+        // Create a material with clipping
         node.material = new THREE.MeshBasicMaterial({
           vertexColors: true,
           transparent: false,
@@ -64,6 +69,7 @@
         node.frustumCulled = true;
       }
     });
+
     scene.add(gltf.scene);
   }, undefined, function (error) {
     console.error(error);
@@ -82,7 +88,6 @@
     renderer.setAnimationLoop(function () {
       if (renderer.xr.isPresenting) {
         // Set camera position and rotation to match non-VR
-        console.log(camera);
         user.position.set(0,-1.6,-0.002650000000000002);
         user.fov = maxFov;
         camera.updateProjectionMatrix(); // Update projection matrix
