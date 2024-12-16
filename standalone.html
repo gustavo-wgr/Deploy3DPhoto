@@ -77,7 +77,7 @@
 
     const renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000); // Change background to black
+    renderer.setClearColor(0x808080); // Change background to black
     renderer.xr.enabled = true;
 
     const vrButton = VRButton.createButton(renderer);
@@ -145,7 +145,7 @@
                     node.scale.set(zoomScale, zoomScale, 1);
                     node.material = new THREE.MeshBasicMaterial({
                         vertexColors: true,
-                        transparent: true,
+                        transparent: false,
                         opacity: 1.0
                     });
                     node.frustumCulled = true;
