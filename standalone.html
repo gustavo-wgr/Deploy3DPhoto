@@ -97,7 +97,7 @@
 
 
     const loader = new GLTFLoader();
-    const models = [
+    let models = [
         'models/cacdoha_000122_access_crop.glb',
         'models/cacdoha_000123_access_crop.glb',
         'models/cacdoha_000140_access_crop.glb',
@@ -119,6 +119,11 @@
     ];
     let currentModelIndex = 0;
     let currentModel = null; // Keep a reference to the current model
+
+    models = shuffleArray(models);
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
 
     function changeModel(direction) {
         // Remove the current model from the scene if it exists
@@ -168,6 +173,14 @@
         console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
     });
 
+
+    window.addEventListener('gamepaddisconnected', (event) => {
+        if (gamepadIndex === event.gamepad.index) {
+            gamepadIndex = null;
+            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
+        }
+    });
+
     window.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowRight') {
             changeModel(1); // Next model
@@ -177,12 +190,7 @@
     });
 
 
-    window.addEventListener('gamepaddisconnected', (event) => {
-        if (gamepadIndex === event.gamepad.index) {
-            gamepadIndex = null;
-            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
-        }
-    });
+
 
     function handleGamepadInput() {
         if (gamepadIndex !== null) {
@@ -192,15 +200,16 @@
                 // console.log('Trigger Value:', triggerValue);
 
                 // You can also check for button presses
-                if (gamepad.buttons[7].pressed) {
+                console.log(gamepad.buttons);
+                if (gamepad.buttons[0].pressed) {
                     changeModel(1);
                 }
-                // const xAxis = gamepad.axes[2]; // Right joystick X-axis
-                // if (xAxis > 0.5) {
-                //     changeModel(1); // Next model
-                // } else if (xAxis < -0.5) {
-                //     changeModel(-1); // Previous model
-                // }
+            //     const xAxis = gamepad.axes[2]; // Right joystick X-axis
+            //     if (xAxis > 0.5) {
+            //         changeModel(1); // Next model
+            //     } else if (xAxis < -0.5) {
+            //         changeModel(-1); // Previous model
+            //     }
             }
         }
     }
