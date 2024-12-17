@@ -175,7 +175,20 @@
         }
     });
 
-    // Function to handle gamepad input
+    let gamepadIndex = null;
+
+    window.addEventListener('gamepadconnected', (event) => {
+        gamepadIndex = event.gamepad.index;
+        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
+    });
+
+    window.addEventListener('gamepaddisconnected', (event) => {
+        if (gamepadIndex === event.gamepad.index) {
+            gamepadIndex = null;
+            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
+        }
+    });
+
     function handleGamepadInput() {
         if (gamepadIndex !== null) {
             const gamepad = navigator.getGamepads()[gamepadIndex];
@@ -190,9 +203,6 @@
         }
     }
 
-    // Polling gamepad input at a set interval
-    setInterval(handleGamepadInput, 100); // Check e
-
 
     function animate() {
         renderer.setAnimationLoop(function () {
@@ -200,7 +210,7 @@
                 user.position.set(0, -1.6, 0);
                 // camera.updateProjectionMatrix();
             } else {
-                console.log("here");
+                handleGamepadInput();
                 camera.position.copy(nonVrCameraRotation);
                 camera.rotation.copy(nonVrCameraRotation);
                 camera.matrix.copy(matrixCam);
