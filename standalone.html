@@ -64,6 +64,7 @@
 <script type="module">
     import * as THREE from 'three';
     import {VRButton} from 'three/addons/webxr/VRButton.js';
+    // import { XR_BUTTONS } from 'gamepad-wrapper';
     import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
     const scene = new THREE.Scene();
@@ -175,12 +176,6 @@
         }
     });
 
-    let gamepadIndex = null;
-
-    window.addEventListener('gamepadconnected', (event) => {
-        gamepadIndex = event.gamepad.index;
-        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
-    });
 
     window.addEventListener('gamepaddisconnected', (event) => {
         if (gamepadIndex === event.gamepad.index) {
@@ -193,12 +188,19 @@
         if (gamepadIndex !== null) {
             const gamepad = navigator.getGamepads()[gamepadIndex];
             if (gamepad) {
-                const xAxis = gamepad.axes[2]; // Right joystick X-axis
-                if (xAxis > 0.5) {
-                    changeModel(1); // Next model
-                } else if (xAxis < -0.5) {
-                    changeModel(-1); // Previous model
+                // const triggerValue = gamepad.buttons[7].value; // Right trigger
+                // console.log('Trigger Value:', triggerValue);
+
+                // You can also check for button presses
+                if (gamepad.buttons[7].pressed) {
+                    changeModel(1);
                 }
+                // const xAxis = gamepad.axes[2]; // Right joystick X-axis
+                // if (xAxis > 0.5) {
+                //     changeModel(1); // Next model
+                // } else if (xAxis < -0.5) {
+                //     changeModel(-1); // Previous model
+                // }
             }
         }
     }
