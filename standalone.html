@@ -178,9 +178,9 @@
             const rightController = gamepads[rightControllerIndex];
             if (rightController.axes) {
                 const xAxis = rightController.axes[0];
-                if (xAxis > 0.5) {
+                if (xAxis > 0.9) {
                     changeModel(1);
-                } else if (xAxis < -0.5) {
+                } else if (xAxis < -0.9) {
                     changeModel(-1);
                 }
             }
