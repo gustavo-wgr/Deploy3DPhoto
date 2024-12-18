@@ -166,20 +166,6 @@
         });
     }
 
-    let gamepadIndex = null;
-
-    window.addEventListener('gamepadconnected', (event) => {
-        gamepadIndex = event.gamepad.index;
-        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
-    });
-
-
-    window.addEventListener('gamepaddisconnected', (event) => {
-        if (gamepadIndex === event.gamepad.index) {
-            gamepadIndex = null;
-            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
-        }
-    });
 
     window.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowRight') {
@@ -188,36 +174,6 @@
             changeModel(-1); // Previous model
         }
     });
-
-
-
-
-    function handleGamepadInput() {
-        if (gamepadIndex !== null) {
-            const gamepad = navigator.getGamepads()[gamepadIndex];
-            if (gamepad) {
-                // const triggerValue = gamepad.buttons[7].value; // Right trigger
-                // console.log('Trigger Value:', triggerValue);
-
-                // You can also check for button presses
-                console.log(gamepad.buttons);
-                if (gamepad.buttons[0].pressed) {
-                    changeModel(1);
-                    const xAxis = gamepad.axes[2]; // Right joystick X-axis
-                    if (xAxis > 0.9) {
-                        changeModel(1); // Next model
-                    } else if (xAxis < -0.9) {
-                        changeModel(-1); // Previous model
-                    }
-                    //     const xAxis = gamepad.axes[2]; // Right joystick X-axis
-                    //     if (xAxis > 0.5) {
-                    //         changeModel(1); // Next model
-                    //     } else if (xAxis < -0.5) {
-                    //         changeModel(-1); // Previous model
-                    //     }
-                }
-            }
-        }
 
 
         function animate() {
@@ -257,6 +213,7 @@
         });
 
         animate();
+
 </script>
 </body>
 </html>
