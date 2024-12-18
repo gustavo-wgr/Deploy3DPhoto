@@ -31,8 +31,8 @@
             top: 10px;
             right: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: column; /* Change to 'row' for horizontal layout */
+            gap: 10px; /* Space between buttons */
         }
 
         .button {
@@ -50,18 +50,21 @@
 					"three/addons/": "./jsm/"
 				}
         }
+
     </script>
 </head>
 <body>
 <div id="container"></div>
 
 <div class="button-container">
+    <!--  <button id="prevButton" class="button">Previous</button>-->
     <button id="nextButton" class="button">Next</button>
 </div>
 
 <script type="module">
     import * as THREE from 'three';
     import {VRButton} from 'three/addons/webxr/VRButton.js';
+    // import { XR_BUTTONS } from 'gamepad-wrapper';
     import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
     const scene = new THREE.Scene();
@@ -75,7 +78,7 @@
 
     const renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x808080);
+    renderer.setClearColor(0x808080); // Change background to black
     renderer.xr.enabled = true;
 
     const vrButton = VRButton.createButton(renderer);
@@ -92,8 +95,10 @@
     nonVrCameraRotation.copy(camera.rotation);
     matrixCam.copy(camera.matrix);
 
+
     const loader = new GLTFLoader();
     let models = [
+        // 'models/cacdoha_000122_access_crop.glb',
         'models/cacdoha_000123_access_crop.glb',
         'models/cacdoha_000140_access_crop.glb',
         'models/cacdoha_000110_access_crop.glb',
@@ -113,15 +118,15 @@
         'models/cacdoha_000116_access_crop.glb'
     ];
     let currentModelIndex = 0;
-    let currentModel = null;
+    let currentModel = null; // Keep a reference to the current model
 
+    models = shuffleArray(models);
     function shuffleArray(array) {
         return array.sort(() => Math.random() - 0.5);
     }
 
-    models = shuffleArray(models);
-
     function changeModel(direction) {
+        // Remove the current model from the scene if it exists
         if (currentModel) {
             scene.remove(currentModel);
         }
@@ -130,6 +135,7 @@
         if (currentModelIndex < 0) currentModelIndex = models.length - 1;
         if (currentModelIndex >= models.length) currentModelIndex = 0;
 
+        // Load the new model and keep a reference to it
         loadModel(currentModelIndex);
     }
 
@@ -138,7 +144,7 @@
     function loadModel(index) {
         loader.load(models[index], function (gltf) {
             gltf.scene.rotation.x = Math.PI;
-            const zoomScale = 4.0;
+            const zoomScale = 4.2;
 
             gltf.scene.traverse(function (node) {
                 if (node.isMesh) {
@@ -152,6 +158,7 @@
                 }
             });
 
+            // Set current model reference and add to scene
             currentModel = gltf.scene;
             scene.add(currentModel);
         }, undefined, function (error) {
@@ -159,77 +166,97 @@
         });
     }
 
-    let rightControllerIndex = null;
+    let gamepadIndex = null;
 
-    function findRightControllerIndex() {
-        const gamepads = navigator.getGamepads();
-        for (let i = 0; i < gamepads.length; i++) {
-            const gamepad = gamepads[i];
-            if (gamepad && gamepad.id.includes('Right')) {
-                rightControllerIndex = i;
-                break;
-            }
+    window.addEventListener('gamepadconnected', (event) => {
+        gamepadIndex = event.gamepad.index;
+        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
+    });
+
+
+    window.addEventListener('gamepaddisconnected', (event) => {
+        if (gamepadIndex === event.gamepad.index) {
+            gamepadIndex = null;
+            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
         }
-    }
-
-    function checkGamepadInput() {
-        const gamepads = navigator.getGamepads();
-        if (rightControllerIndex !== null && gamepads[rightControllerIndex]) {
-            const rightController = gamepads[rightControllerIndex];
-            if (rightController.axes) {
-                const xAxis = rightController.axes[0];
-                if (xAxis > 0.9) {
-                    changeModel(1);
-                } else if (xAxis < -0.9) {
-                    changeModel(-1);
-                }
-            }
-        }
-    }
-
-    function animate() {
-        renderer.setAnimationLoop(function () {
-            if (renderer.xr.isPresenting) {
-                user.position.set(0, -1.6, 0);
-            } else {
-                camera.position.copy(nonVrCameraRotation);
-                camera.rotation.copy(nonVrCameraRotation);
-                camera.matrix.copy(matrixCam);
-                user.position.set(0, 0, 0);
-                cameraZOffset += direction * 0.00005;
-                if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
-                    direction *= -1;
-                }
-                camera.position.z = -cameraZOffset;
-            }
-            // checkGamepadInput();
-            camera.updateProjectionMatrix();
-            renderer.render(scene, camera);
-        });
-    }
+    });
 
     window.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowRight') {
-            changeModel(1);
+            changeModel(1); // Next model
         } else if (event.key === 'ArrowLeft') {
-            changeModel(-1);
+            changeModel(-1); // Previous model
         }
     });
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
 
-    document.getElementById('nextButton').addEventListener('click', () => {
-        changeModel(1);
-    });
 
-    // Call this function to find the right controller index
-    findRightControllerIndex();
 
-    animate();
+    function handleGamepadInput() {
+        if (gamepadIndex !== null) {
+            const gamepad = navigator.getGamepads()[gamepadIndex];
+            if (gamepad) {
+                // const triggerValue = gamepad.buttons[7].value; // Right trigger
+                // console.log('Trigger Value:', triggerValue);
+
+                // You can also check for button presses
+                console.log(gamepad.buttons);
+                if (gamepad.buttons[0].pressed) {
+                    changeModel(1);
+                    const xAxis = gamepad.axes[2]; // Right joystick X-axis
+                    if (xAxis > 0.9) {
+                        changeModel(1); // Next model
+                    } else if (xAxis < -0.9) {
+                        changeModel(-1); // Previous model
+                    }
+                    //     const xAxis = gamepad.axes[2]; // Right joystick X-axis
+                    //     if (xAxis > 0.5) {
+                    //         changeModel(1); // Next model
+                    //     } else if (xAxis < -0.5) {
+                    //         changeModel(-1); // Previous model
+                    //     }
+                }
+            }
+        }
+
+
+        function animate() {
+            renderer.setAnimationLoop(function () {
+                if (renderer.xr.isPresenting) {
+                    user.position.set(0, -1.6, 0);
+                    // camera.updateProjectionMatrix();
+                } else {
+                    handleGamepadInput();
+                    camera.position.copy(nonVrCameraRotation);
+                    camera.rotation.copy(nonVrCameraRotation);
+                    camera.matrix.copy(matrixCam);
+                    user.position.set(0, 0, 0);
+                    cameraZOffset += direction * 0.00005;
+                    if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
+                        direction *= -1;
+                    }
+                    camera.position.z = -cameraZOffset;
+                }
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // document.getElementById('prevButton').addEventListener('click', () => {
+        //   changeModel(-1); // Previous model
+        // });
+
+        document.getElementById('nextButton').addEventListener('click', () => {
+            changeModel(1); // Next model
+        });
+
+        animate();
 </script>
 </body>
 </html>
