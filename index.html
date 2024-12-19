@@ -166,21 +166,6 @@
         });
     }
 
-    let gamepadIndex = null;
-
-    window.addEventListener('gamepadconnected', (event) => {
-        gamepadIndex = event.gamepad.index;
-        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
-    });
-
-
-    window.addEventListener('gamepaddisconnected', (event) => {
-        if (gamepadIndex === event.gamepad.index) {
-            gamepadIndex = null;
-            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
-        }
-    });
-
     window.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowRight') {
             changeModel(1); // Next model
