@@ -1,13 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>WebXR with Three.js</title>
+    <title>Immersive Autochromes</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
     <style>
-        body { margin: 0; }
-        #container { width: 100%; height: 100vh; }
-        #info { position: absolute; top: 10px; left: 10px; color: white; }
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100%;
+            height: 100vh;
+        }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+        }
+
+        #VRButton {
+            z-index: 99999 !important;
+        }
+
+        .button-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column; /* Change to 'row' for horizontal layout */
+            gap: 10px; /* Space between buttons */
+        }
+
+        .button {
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
     <script type="importmap">
         {
@@ -16,80 +50,200 @@
 					"three/addons/": "./jsm/"
 				}
         }
+
     </script>
 </head>
 <body>
 <div id="container"></div>
 
+<div class="button-container">
+    <!--  <button id="prevButton" class="button">Previous</button>-->
+    <button id="nextButton" class="button">Next</button>
+</div>
 
 <script type="module">
     import * as THREE from 'three';
-    import { VRButton } from 'three/addons/webxr/VRButton.js';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import {VRButton} from 'three/addons/webxr/VRButton.js';
+    // import { XR_BUTTONS } from 'gamepad-wrapper';
+    import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
     const scene = new THREE.Scene();
-
     const data = JSON.parse('{"Height": 745, "Width": 960, "hFov": 0.9272952180016122, "vFov": 0.7412849108138079}');
-    const maxFov = Math.max(data.hFov, data.vFov) * (180 / Math.PI);
+    const maxFov = 90;
 
-    const user = new THREE.Group(); // Create user group
+    const user = new THREE.Group();
+    const camera = new THREE.PerspectiveCamera(maxFov, window.innerWidth / window.innerHeight, 0.1, 100);
+    user.add(camera);
+    scene.add(user);
 
-
-    const camera = new THREE.PerspectiveCamera(maxFov, data.Width / data.Height, 0.1, 1000);
-    // camera.position.y = 0; // Set camera height
-
-    user.add(camera); // Add camera to user group
-    scene.add(user); // Add user group to scene
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x808080);
+    renderer.setClearColor(0x808080); // Change background to black
     renderer.xr.enabled = true;
 
-    document.body.appendChild(VRButton.createButton(renderer));
+    const vrButton = VRButton.createButton(renderer);
+    document.body.appendChild(vrButton);
     document.getElementById('container').appendChild(renderer.domElement);
 
+    let cameraZOffset = 0;
+    let cameraZMaxOffset = 0.025;
+    let direction = 1;
+    let nonVrCameraPosition = new THREE.Vector3();
+    let nonVrCameraRotation = new THREE.Euler();
+    let matrixCam = new THREE.Matrix4();
+    nonVrCameraPosition.copy(camera.position);
+    nonVrCameraRotation.copy(camera.rotation);
+    matrixCam.copy(camera.matrix);
+
+
     const loader = new GLTFLoader();
-    loader.load('https://cors-anywhere.herokuapp.com/https://owncloud.fraunhofer.de/index.php/s/Prk6zzZsePZwKqI/download', function (gltf) {
-    // loader.load('models/cacdoha_000140_access_crop.glb', function (gltf) {
-        gltf.scene.rotation.x = Math.PI;
-        gltf.scene.traverse(function (node) {
-            if (node.isMesh) {
-                node.material = new THREE.MeshBasicMaterial({
-                    vertexColors: true,
-                    transparent: false,
-                    opacity: 1.0
-                });
-            }
+    let models = [
+        // 'models/cacdoha_000122_access_crop.glb',
+        'models/cacdoha_000123_access_crop.glb',
+        'models/cacdoha_000140_access_crop.glb',
+        'models/cacdoha_000110_access_crop.glb',
+        'models/cacdoha_000345_access_crop.glb',
+        'models/cacdoha_000412_access_crop.glb',
+        'models/cacdoha_000422_access_crop.glb',
+        'models/cacdoha_000457_access_crop.glb',
+        'models/cacdoha_000490_access_crop.glb',
+        'models/cacdoha_000491_access_crop.glb',
+        'models/cacdoha_000152_access_crop.glb',
+        'models/cacdoha_000154_access_crop.glb',
+        'models/cacdoha_000161_access_crop.glb',
+        'models/cacdoha_000321_access_crop.glb',
+        'models/cacdoha_000089_access_crop.glb',
+        'models/cacdoha_000196_access_crop.glb',
+        'models/cacdoha_000443_access_crop.glb',
+        'models/cacdoha_000116_access_crop.glb'
+    ];
+    let currentModelIndex = 0;
+    let currentModel = null; // Keep a reference to the current model
+
+    models = shuffleArray(models);
+    function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function changeModel(direction) {
+        // Remove the current model from the scene if it exists
+        if (currentModel) {
+            scene.remove(currentModel);
+        }
+
+        currentModelIndex += direction;
+        if (currentModelIndex < 0) currentModelIndex = models.length - 1;
+        if (currentModelIndex >= models.length) currentModelIndex = 0;
+
+        // Load the new model and keep a reference to it
+        loadModel(currentModelIndex);
+    }
+
+    loadModel(currentModelIndex);
+
+    function loadModel(index) {
+        loader.load(models[index], function (gltf) {
+            gltf.scene.rotation.x = Math.PI;
+            const zoomScale = 4.2;
+
+            gltf.scene.traverse(function (node) {
+                if (node.isMesh) {
+                    node.scale.set(zoomScale, zoomScale, 1);
+                    node.material = new THREE.MeshBasicMaterial({
+                        vertexColors: true,
+                        transparent: false,
+                        opacity: 1.0
+                    });
+                    node.frustumCulled = true;
+                }
+            });
+
+            // Set current model reference and add to scene
+            currentModel = gltf.scene;
+            scene.add(currentModel);
+        }, undefined, function (error) {
+            console.error(error);
         });
-        scene.add(gltf.scene);
-    }, undefined, function (error) {
-        console.error(error);
+    }
+
+    let gamepadIndex = null;
+
+    window.addEventListener('gamepadconnected', (event) => {
+        gamepadIndex = event.gamepad.index;
+        console.log(`Gamepad connected at index ${gamepadIndex}: ${event.gamepad.id}`);
     });
 
-    let cameraZOffset = 0; // Offset for camera movement
-    const cameraZMaxOffset = 0.025; // Maximum offset for movement
-    let direction = 1; // Direction of movement (1 for in, -1 for out)
+
+    window.addEventListener('gamepaddisconnected', (event) => {
+        if (gamepadIndex === event.gamepad.index) {
+            gamepadIndex = null;
+            console.log(`Gamepad disconnected at index ${event.gamepad.index}`);
+        }
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight') {
+            changeModel(1); // Next model
+        } else if (event.key === 'ArrowLeft') {
+            changeModel(-1); // Previous model
+        }
+    });
+
+
+
+
+    function handleGamepadInput() {
+        if (gamepadIndex !== null) {
+            const gamepad = navigator.getGamepads()[gamepadIndex];
+            if (gamepad) {
+                const xAxis = gamepad.axes[2]; // Right joystick X-axis
+                if (xAxis > 0.9) {
+                    changeModel(1); // Next model
+                } else if (xAxis < -0.9) {
+                    changeModel(-1); // Previous model
+                }
+            }
+        }
+    }
+
 
     function animate() {
         renderer.setAnimationLoop(function () {
             if (renderer.xr.isPresenting) {
-                user.position.set(0, -1.6, 0); // Set position for VR
+                user.position.set(0, -1.6, 0);
+                // camera.updateProjectionMatrix();
             } else {
-                user.position.set(0, 0, 0); // Set position for non-VR
-
-                // Update camera Z position for oscillation
-                cameraZOffset += direction * 0.00005; // Move camera slightly
+                handleGamepadInput();
+                camera.position.copy(nonVrCameraRotation);
+                camera.rotation.copy(nonVrCameraRotation);
+                camera.matrix.copy(matrixCam);
+                user.position.set(0, 0, 0);
+                cameraZOffset += direction * 0.00005;
                 if (cameraZOffset >= cameraZMaxOffset || cameraZOffset <= 0) {
-                    direction *= -1; // Reverse direction
+                    direction *= -1;
                 }
-                camera.position.z = -cameraZOffset; // Apply the new z position (inward movement)
+                camera.position.z = -cameraZOffset;
             }
+            camera.updateProjectionMatrix();
             renderer.render(scene, camera);
         });
     }
 
-    animate();
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // document.getElementById('prevButton').addEventListener('click', () => {
+    //   changeModel(-1); // Previous model
+    // });
+
+    document.getElementById('nextButton').addEventListener('click', () => {
+        changeModel(1); // Next model
+    });
 
     animate();
 </script>
+</body>
+</html>
