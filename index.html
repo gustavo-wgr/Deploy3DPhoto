@@ -190,30 +190,38 @@
     });
 
 
-
-
+    let thumbpadRightPressed = false; // Track thumbpad press state
     function handleGamepadInput() {
-        if (gamepadIndex !== null) {
-            const gamepad = navigator.getGamepads()[gamepadIndex];
-            if (gamepad) {
-                const xAxis = gamepad.axes[2]; // Right joystick X-axis
-                if (xAxis > 0.9) {
-                    changeModel(1); // Next model
-                } else if (xAxis < -0.9) {
-                    changeModel(-1); // Previous model
+        const session = renderer.xr.getSession();
+        if (session) { // Only if we are in a WebXR session
+            for (const sourceXR of session.inputSources) {
+                if (!sourceXR.gamepad) continue;
+                // Check for right controller
+                if (
+                    sourceXR &&
+                    sourceXR.gamepad &&
+                    sourceXR.handedness === 'right' // Check for the right handedness
+                ) {
+                    const axes = sourceXR.gamepad.axes; // Get thumbpad axes
+                    const thumbpadX = axes[2]; // Adjust this index based on your specific controller
+                    // Change model based on thumbpad movement
+                    if (thumbpadX >= 0.5 && !thumbpadRightPressed) { // Adjust threshold if needed
+                        thumbpadRightPressed = true; // Set the state to pressed
+                        changeModel(1); // Move to the next model
+                    } else if (thumbpadX < 0.5) {
+                        thumbpadRightPressed = false; // Reset the state when released
+                    }
                 }
             }
         }
     }
-
-
     function animate() {
         renderer.setAnimationLoop(function () {
             if (renderer.xr.isPresenting) {
                 user.position.set(0, -1.6, 0);
+                handleGamepadInput();
                 // camera.updateProjectionMatrix();
             } else {
-                handleGamepadInput();
                 camera.position.copy(nonVrCameraRotation);
                 camera.rotation.copy(nonVrCameraRotation);
                 camera.matrix.copy(matrixCam);
