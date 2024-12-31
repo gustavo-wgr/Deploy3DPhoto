@@ -176,6 +176,7 @@
 
 
     let thumbpadRightPressed = false; // Track thumbpad press state
+    let thumbpadLeftPressed = false; // Track thumbpad press state
     function handleGamepadInput() {
         const session = renderer.xr.getSession();
         if (session) { // Only if we are in a WebXR session
@@ -195,6 +196,13 @@
                         changeModel(1); // Move to the next model
                     } else if (thumbpadX < 0.5) {
                         thumbpadRightPressed = false; // Reset the state when released
+                    }
+                    if (thumbpadX <= -0.5 && !thumbpadLeftPressed) { // Adjust threshold if needed
+                        thumbpadLeftPressed = true; // Set the state to pressed
+                        changeModel(-1); // Move to the next model
+                    }
+                    else if(thumbpadX > -0.5){
+                        thumbpadLeftPressed = false
                     }
                 }
             }
