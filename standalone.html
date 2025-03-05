@@ -152,7 +152,8 @@
                     node.material = new THREE.MeshBasicMaterial({
                         vertexColors: true,
                         transparent: false,
-                        opacity: 1.0
+                        opacity: 1.0,
+                        flatShading: true // Disable shading
                     });
                     node.frustumCulled = true;
                 }
