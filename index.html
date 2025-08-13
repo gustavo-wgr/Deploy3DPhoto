@@ -42,6 +42,64 @@
             cursor: pointer;
             font-size: 16px;
         }
+
+        .model-type-button {
+            padding: 10px 15px;
+            background-color: rgba(0, 150, 255, 0.8);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+
+        .model-type-button.active {
+            background-color: rgba(0, 100, 200, 0.9);
+        }
+
+        .model-info {
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        
+        .loading {
+            background-color: rgba(255, 165, 0, 0.8) !important;
+        }
+        
+        .error {
+            background-color: rgba(255, 0, 0, 0.8) !important;
+        }
+        
+        .vr-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none; /* Hidden by default, shown in VR */
+        }
+        
+        .vr-controls h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .vr-controls ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .vr-controls li {
+            margin: 5px 0;
+        }
     </style>
     <script type="importmap">
         {
@@ -57,8 +115,19 @@
 <div id="container"></div>
 
 <div class="button-container">
+    <button id="modelTypeButton" class="model-type-button">Change Depth Model</button>
+    <div id="modelInfo" class="model-info">DepthAnything - Model 122</div>
     <!--  <button id="prevButton" class="button">Previous</button>-->
     <button id="nextButton" class="button">Next</button>
+</div>
+
+<div class="vr-controls" id="vrControls">
+    <h3>VR Controls</h3>
+    <ul>
+        <li><strong>Right Thumbpad Left/Right:</strong> Previous/Next Model</li>
+        <li><strong>Left Thumbpad Up:</strong> Switch Depth Model Type</li>
+        <li><strong>Left Trigger:</strong> Move Model Down</li>
+    </ul>
 </div>
 
 <script type="module">
@@ -95,37 +164,122 @@
     nonVrCameraRotation.copy(camera.rotation);
     matrixCam.copy(camera.matrix);
 
-
     const loader = new GLTFLoader();
-    let models = [
-        // 'models/cacdoha_000122_access_crop.glb',
-        'models/cacdoha_000123_access_crop.glb',
-        'models/cacdoha_000140_access_crop.glb',
-        'models/cacdoha_000110_access_crop.glb',
-        'models/cacdoha_000345_access_crop.glb',
-        'models/cacdoha_000412_access_crop.glb',
-        'models/cacdoha_000422_access_crop.glb',
-        'models/cacdoha_000457_access_crop.glb',
-        'models/cacdoha_000490_access_crop.glb',
-        'models/cacdoha_000491_access_crop.glb',
-        'models/cacdoha_000152_access_crop.glb',
-        'models/cacdoha_000154_access_crop.glb',
-        'models/cacdoha_000161_access_crop.glb',
-        'models/cacdoha_000321_access_crop.glb',
-        'models/cacdoha_000089_access_crop.glb',
-        'models/cacdoha_000196_access_crop.glb',
-        'models/cacdoha_000443_access_crop.glb',
-        'models/cacdoha_000116_access_crop.glb'
+    
+    // Define model arrays for both types
+    const depthAnythingModels = [
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000122_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000123_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000140_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000110_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000345_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000412_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000422_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000457_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000490_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000491_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000152_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000154_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000161_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000321_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000089_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000196_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000443_access.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/anythingv2_models/cacdoha_000116_access.glb'
     ];
+
+    const midasModels = [
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000122_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000123_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000140_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000110_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000345_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000412_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000422_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000457_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000490_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000491_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000152_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000154_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000161_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000321_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000089_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000196_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000443_access_crop.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/midas_models/cacdoha_000116_access_crop.glb'
+    ];
+
+    const lotusModels = [
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/122.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/123.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000140_access-17550003610000.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/110.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000345_access-17550003610008.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000412_access-17550003610009.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000422_access-17550003610010.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000457_access-17550003610012.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000490_access-17550003610013.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000491_access-17550003610014.glb',
+
+        //'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000149_access-17550003610001.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000152_access-17550003610002.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000154_access-17550003610003.glb',
+        //'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000156_access-17550003610004.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000161_access-17550003610005.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000321_access-17550003610007.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/89.glb',
+
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000196_access-17550003610006.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/cacdoha_000443_access-17550003610011.glb',
+        'https://huggingface.co/gust-t/deploy3d/resolve/main/lotus_models/116.glb'
+    ];
+
+    let currentModelType = 'depthAnything'; // 'depthAnything', 'midas', or 'lotus'
+    let models = [...depthAnythingModels]; // Start with DepthAnything models
     let currentModelIndex = 0;
     let currentModel = null; // Keep a reference to the current model
+    
+    // Memory management for large models
+    let loadedModels = new Map(); // Cache for loaded models
+    let modelAccessOrder = []; // Track access order for LRU cache
+    const MAX_CACHED_MODELS = 3; // Limit cached models to prevent memory issues
+    let isLoading = false; // Prevent multiple simultaneous loads
 
-    models = shuffleArray(models);
-    function shuffleArray(array) {
-        return array.sort(() => Math.random() - 0.5);
+    function switchModelType() {
+        // Store the current index to maintain position across model types
+        const currentIndex = currentModelIndex;
+
+        // Remove current model
+        if (currentModel) {
+            scene.remove(currentModel);
+        }
+
+        // Switch model type
+        if (currentModelType === 'depthAnything') {
+            currentModelType = 'midas';
+            models = [...midasModels];
+        } else if (currentModelType === 'midas') {
+            currentModelType = 'lotus';
+            models = [...lotusModels];
+        } else {
+            currentModelType = 'depthAnything';
+            models = [...depthAnythingModels];
+        }
+
+        // Use the same index position in the new array
+        currentModelIndex = currentIndex;
+        
+        // Ensure index is within bounds
+        if (currentModelIndex >= models.length) {
+            currentModelIndex = 0;
+        }
+
+        loadModel(currentModelIndex);
     }
 
     function changeModel(direction) {
+        if (isLoading) return; // Prevent loading while another load is in progress
+        
         // Remove the current model from the scene if it exists
         if (currentModel) {
             scene.remove(currentModel);
@@ -135,14 +289,49 @@
         if (currentModelIndex < 0) currentModelIndex = models.length - 1;
         if (currentModelIndex >= models.length) currentModelIndex = 0;
 
+        // Clear cache when moving to a new model index
+        clearModelCache();
+        console.log(`Cache cleared - moving to new model index: ${currentModelIndex}`);
+
         // Load the new model and keep a reference to it
         loadModel(currentModelIndex);
+        
+        // Log cache status after switching
+        setTimeout(() => getCacheInfo(), 1000);
     }
 
     loadModel(currentModelIndex);
 
-    function loadModel(index) {
-        loader.load(models[index], function (gltf) {
+        function loadModel(index) {
+        if (isLoading) return;
+        isLoading = true;
+        
+        const modelPath = models[index];
+        const filename = modelPath.split('/').pop();
+        const modelKey = `${currentModelType}_${index}`;
+        
+        console.log(`Loading ${currentModelType} model at index ${index} (${filename})`);
+        
+        // Check if model is already cached
+        if (loadedModels.has(modelKey)) {
+            console.log(`Using cached model: ${modelKey}`);
+            const cachedModel = loadedModels.get(modelKey);
+            currentModel = cachedModel.clone();
+            scene.add(currentModel);
+            updateModelInfo(index);
+            isLoading = false;
+            
+            // Update access order (move to end = most recently used)
+            updateModelAccessOrder(modelKey);
+            return;
+        }
+        
+        // Show loading indicator
+        const modelInfo = document.getElementById('modelInfo');
+        modelInfo.textContent = `Loading ${currentModelType} model...`;
+        modelInfo.className = 'model-info loading';
+        
+        loader.load(modelPath, function (gltf) {
             gltf.scene.rotation.x = Math.PI;
             const zoomScale = 4.2;
 
@@ -158,11 +347,173 @@
                 }
             });
 
+            // Cache the loaded model
+            loadedModels.set(modelKey, gltf.scene.clone());
+            
+            // Update access order
+            updateModelAccessOrder(modelKey);
+            
+            // Manage cache size using LRU (Least Recently Used)
+            manageCacheSize();
+
             // Set current model reference and add to scene
             currentModel = gltf.scene;
             scene.add(currentModel);
-        }, undefined, function (error) {
-            console.error(error);
+            
+            updateModelInfo(index);
+            console.log(`✓ Successfully loaded ${currentModelType} model at index ${index}`);
+            isLoading = false;
+            
+            // Preload other model types at same index in background
+            setTimeout(preloadOtherModelTypes, 1000);
+        }, 
+        // Progress callback
+        function (progress) {
+            const percent = Math.round((progress.loaded / progress.total) * 100);
+            const modelInfo = document.getElementById('modelInfo');
+            modelInfo.textContent = `Loading ${currentModelType} model... ${percent}%`;
+            modelInfo.className = 'model-info loading';
+        },
+        function (error) {
+            console.error(`Error loading ${currentModelType} model at index ${index}:`, error);
+            const modelInfo = document.getElementById('modelInfo');
+            modelInfo.textContent = `Error loading model`;
+            modelInfo.className = 'model-info error';
+            isLoading = false;
+        });
+    }
+    
+    function updateModelInfo(index) {
+        let modelTypeDisplay;
+        if (currentModelType === 'depthAnything') {
+            modelTypeDisplay = 'DepthAnything';
+        } else if (currentModelType === 'midas') {
+            modelTypeDisplay = 'MiDaS';
+        } else {
+            modelTypeDisplay = 'Lotus';
+        }
+        const modelInfo = document.getElementById('modelInfo');
+        modelInfo.textContent = `${modelTypeDisplay} - Index ${index + 1}`;
+        modelInfo.className = 'model-info';
+    }
+    
+    // LRU Cache Management Functions
+    function updateModelAccessOrder(modelKey) {
+        // Remove from current position if exists
+        const index = modelAccessOrder.indexOf(modelKey);
+        if (index > -1) {
+            modelAccessOrder.splice(index, 1);
+        }
+        // Add to end (most recently used)
+        modelAccessOrder.push(modelKey);
+    }
+    
+    function manageCacheSize() {
+        // Remove least recently used models if cache is too large
+        while (loadedModels.size > MAX_CACHED_MODELS) {
+            const leastRecentlyUsed = modelAccessOrder.shift(); // Remove oldest
+            if (leastRecentlyUsed) {
+                loadedModels.delete(leastRecentlyUsed);
+                console.log(`Removed least recently used model: ${leastRecentlyUsed}`);
+            }
+        }
+    }
+    
+    function getCacheInfo() {
+        console.log(`Cache status: ${loadedModels.size}/${MAX_CACHED_MODELS} models`);
+        console.log('Cached models:', Array.from(loadedModels.keys()));
+        console.log('Access order (oldest to newest):', modelAccessOrder);
+    }
+    
+    // Memory management functions
+    function clearModelCache() {
+        loadedModels.clear();
+        modelAccessOrder = [];
+        console.log('Model cache cleared');
+    }
+    
+    function getMemoryInfo() {
+        if (performance.memory) {
+            const used = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024);
+            const total = Math.round(performance.memory.totalJSHeapSize / 1024 / 1024);
+            const limit = Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024);
+            console.log(`Memory: ${used}MB used / ${total}MB total / ${limit}MB limit`);
+            return { used, total, limit };
+        }
+        return null;
+    }
+    
+    // Monitor memory usage
+    setInterval(() => {
+        const memoryInfo = getMemoryInfo();
+        if (memoryInfo && memoryInfo.used > memoryInfo.limit * 0.8) {
+            console.warn('High memory usage detected, clearing cache...');
+            clearModelCache();
+        }
+    }, 10000); // Check every 10 seconds
+    
+    // Preload same index from other model types in background
+    function preloadOtherModelTypes() {
+        const currentIndex = currentModelIndex;
+        
+        // Get the other model types
+        const otherModelTypes = [];
+        if (currentModelType === 'depthAnything') {
+            otherModelTypes.push('midas', 'lotus');
+        } else if (currentModelType === 'midas') {
+            otherModelTypes.push('depthAnything', 'lotus');
+        } else if (currentModelType === 'lotus') {
+            otherModelTypes.push('depthAnything', 'midas');
+        }
+        
+        // Preload each other model type at the same index
+        otherModelTypes.forEach(modelType => {
+            const modelKey = `${modelType}_${currentIndex}`;
+            
+            if (!loadedModels.has(modelKey) && !isLoading) {
+                console.log(`Preloading ${modelType} model at index ${currentIndex}: ${modelKey}`);
+                
+                // Get the correct model array and path
+                let modelArray, modelPath;
+                if (modelType === 'depthAnything') {
+                    modelArray = depthAnythingModels;
+                } else if (modelType === 'midas') {
+                    modelArray = midasModels;
+                } else if (modelType === 'lotus') {
+                    modelArray = lotusModels;
+                }
+                
+                // Check if index is valid for this model type
+                if (currentIndex < modelArray.length) {
+                    modelPath = modelArray[currentIndex];
+                    
+                    loader.load(modelPath, function (gltf) {
+                        gltf.scene.rotation.x = Math.PI;
+                        const zoomScale = 4.2;
+                        
+                        gltf.scene.traverse(function (node) {
+                            if (node.isMesh) {
+                                node.scale.set(zoomScale, zoomScale, 1);
+                                node.material = new THREE.MeshBasicMaterial({
+                                    vertexColors: true,
+                                    transparent: false,
+                                    opacity: 1.0
+                                });
+                                node.frustumCulled = true;
+                            }
+                        });
+                        
+                        loadedModels.set(modelKey, gltf.scene.clone());
+                        console.log(`✓ Preloaded ${modelType} model: ${modelKey}`);
+                        
+                        // Update access order for preloaded model
+                        updateModelAccessOrder(modelKey);
+                        
+                        // Manage cache size using LRU
+                        manageCacheSize();
+                    });
+                }
+            }
         });
     }
 
@@ -171,17 +522,24 @@
             changeModel(1); // Next model
         } else if (event.key === 'ArrowLeft') {
             changeModel(-1); // Previous model
+        } else if (event.key === ' ') { // Spacebar to switch model type
+            switchModelType();
+        } else if (event.key === 'c' || event.key === 'C') { // C key to check cache status
+            getCacheInfo();
         }
     });
 
 
     let thumbpadRightPressed = false; // Track thumbpad press state
     let thumbpadLeftPressed = false; // Track thumbpad press state
+    let leftTriggerPressed = false; // Track left trigger press state
+    let leftThumbpadPressed = false; // Track left thumbpad press state for model type switching
     function handleGamepadInput() {
         const session = renderer.xr.getSession();
         if (session) { // Only if we are in a WebXR session
             for (const sourceXR of session.inputSources) {
                 if (!sourceXR.gamepad) continue;
+                
                 // Check for right controller
                 if (
                     sourceXR &&
@@ -191,18 +549,50 @@
                     const axes = sourceXR.gamepad.axes; // Get thumbpad axes
                     const thumbpadX = axes[2]; // Adjust this index based on your specific controller
                     // Change model based on thumbpad movement
-                    if (thumbpadX >= 0.5 && !thumbpadRightPressed) { // Adjust threshold if needed
+                    if (thumbpadX >= 0.5 && !thumbpadRightPressed) { // Adjust thres/midas if needed
                         thumbpadRightPressed = true; // Set the state to pressed
                         changeModel(1); // Move to the next model
                     } else if (thumbpadX < 0.5) {
                         thumbpadRightPressed = false; // Reset the state when released
                     }
-                    if (thumbpadX <= -0.5 && !thumbpadLeftPressed) { // Adjust threshold if needed
+                    if (thumbpadX <= -0.5 && !thumbpadLeftPressed) { // Adjust thres/midas if needed
                         thumbpadLeftPressed = true; // Set the state to pressed
                         changeModel(-1); // Move to the next model
                     }
                     else if(thumbpadX > -0.5){
                         thumbpadLeftPressed = false
+                    }
+                }
+                
+                // Check for left controller
+                if (
+                    sourceXR &&
+                    sourceXR.gamepad &&
+                    sourceXR.handedness === 'left' // Check for the left handedness
+                ) {
+                    const buttons = sourceXR.gamepad.buttons;
+                    const axes = sourceXR.gamepad.axes;
+                    const triggerButton = buttons[0]; // Usually the trigger is button 0
+                    const thumbpadY = axes[3]; // Left thumbpad Y axis
+                    
+                    // Left trigger - Move model down
+                    if (triggerButton && triggerButton.pressed && !leftTriggerPressed) {
+                        leftTriggerPressed = true;
+                        // Move the current model down on Y axis
+                        if (currentModel) {
+                            currentModel.position.y -= 0.1; // Adjust this value to control movement speed
+                        }
+                    } else if (triggerButton && !triggerButton.pressed) {
+                        leftTriggerPressed = false;
+                    }
+                    
+                    // Left thumbpad up/down - Switch depth model type
+                    if (thumbpadY >= 0.5 && !leftThumbpadPressed) {
+                        leftThumbpadPressed = true;
+                        switchModelType(); // Switch between DepthAnything/MiDaS/Lotus
+                        console.log('VR: Switched depth model type');
+                    } else if (thumbpadY < 0.5) {
+                        leftThumbpadPressed = false;
                     }
                 }
             }
@@ -213,6 +603,8 @@
             if (renderer.xr.isPresenting) {
                 user.position.set(0, -1.6, 0);
                 handleGamepadInput();
+                // Show VR controls
+                document.getElementById('vrControls').style.display = 'block';
                 // camera.updateProjectionMatrix();
             } else {
                 camera.position.copy(nonVrCameraRotation);
@@ -224,6 +616,8 @@
                     direction *= -1;
                 }
                 camera.position.z = -cameraZOffset;
+                // Hide VR controls
+                document.getElementById('vrControls').style.display = 'none';
             }
             camera.updateProjectionMatrix();
             renderer.render(scene, camera);
@@ -242,6 +636,10 @@
 
     document.getElementById('nextButton').addEventListener('click', () => {
         changeModel(1); // Next model
+    });
+
+    document.getElementById('modelTypeButton').addEventListener('click', () => {
+        switchModelType();
     });
 
     animate();
