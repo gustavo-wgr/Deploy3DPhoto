@@ -100,6 +100,187 @@
         .vr-controls li {
             margin: 5px 0;
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: #333;
+            font-size: 24px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .modal-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .web-button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .web-button:hover {
+            background-color: #45a049;
+        }
+
+        .local-button {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .local-button:hover {
+            background-color: #1976D2;
+        }
+
+        .folder-selection {
+            margin-top: 15px;
+        }
+
+        .folder-input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .folder-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .folder-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .file-count {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .file-input-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-input-container.dragover {
+            border-color: #2196F3;
+            background-color: #e3f2fd;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .file-list {
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .file-item {
+            padding: 8px;
+            margin: 5px 0;
+            background-color: #e8f5e8;
+            border-radius: 3px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .model-type-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f5f5f5;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .model-type-section h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .model-type-files {
+            margin-top: 10px;
+        }
+
+        .start-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .start-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
     <script type="importmap">
         {
@@ -114,11 +295,65 @@
 <body>
 <div id="container"></div>
 
+<!-- Modal for choosing between web and local models -->
+<div id="modelChoiceModal" class="modal">
+    <div class="modal-content">
+        <h2>Choose Model Source</h2>
+        <p>Select how you want to load 3D models:</p>
+        <div class="modal-buttons">
+            <button class="modal-button web-button" onclick="chooseWebModels()">Load from Web</button>
+            <button class="modal-button local-button" onclick="chooseLocalModels()">Upload Local Files</button>
+        </div>
+        
+        <div id="fileInputContainer" class="file-input-container">
+            <p>Select folders containing GLB/GLTF files for each depth model type:</p>
+            
+            <div class="folder-selection">
+                <div class="folder-input-group">
+                    <label for="depthAnythingFolder">DepthAnything Models Folder:</label>
+                    <input type="file" id="depthAnythingFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'depthAnything')">
+                    <div id="depthAnythingFileCount" class="file-count"></div>
+                </div>
+                
+                <div class="folder-input-group">
+                    <label for="midasFolder">MiDaS Models Folder:</label>
+                    <input type="file" id="midasFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'midas')">
+                    <div id="midasFileCount" class="file-count"></div>
+                </div>
+                
+                <div class="folder-input-group">
+                    <label for="lotusFolder">Lotus Models Folder:</label>
+                    <input type="file" id="lotusFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'lotus')">
+                    <div id="lotusFileCount" class="file-count"></div>
+                </div>
+            </div>
+            
+            <div id="modelTypeSections" class="model-type-section" style="display: none;">
+                <h4>Selected files by model type:</h4>
+                <div id="depthAnythingSection" class="model-type-files">
+                    <strong>DepthAnything Models:</strong>
+                    <div id="depthAnythingFiles"></div>
+                </div>
+                <div id="midasSection" class="model-type-files">
+                    <strong>MiDaS Models:</strong>
+                    <div id="midasFiles"></div>
+                </div>
+                <div id="lotusSection" class="model-type-files">
+                    <strong>Lotus Models:</strong>
+                    <div id="lotusFiles"></div>
+                </div>
+            </div>
+            
+            <button id="startButton" class="start-button" onclick="startWithLocalModels()" disabled>Start with Selected Models</button>
+        </div>
+    </div>
+</div>
+
 <div class="button-container">
-    <button id="modelTypeButton" class="model-type-button">Change Depth Model</button>
-    <div id="modelInfo" class="model-info">DepthAnything - Model 122</div>
+    <button id="modelTypeButton" class="model-type-button hidden">Change Depth Model</button>
+    <div id="modelInfo" class="model-info hidden">DepthAnything - Model 122</div>
     <!--  <button id="prevButton" class="button">Previous</button>-->
-    <button id="nextButton" class="button">Next</button>
+    <button id="nextButton" class="button hidden">Next</button>
 </div>
 
 <div class="vr-controls" id="vrControls">
@@ -127,6 +362,9 @@
         <li><strong>Right Thumbpad Left/Right:</strong> Previous/Next Model</li>
         <li><strong>Left Thumbpad Up:</strong> Switch Depth Model Type</li>
         <li><strong>Left Trigger:</strong> Move Model Down</li>
+        <li><strong>Left Grip:</strong> Move Model Up</li>
+        <li><strong>Right Trigger:</strong> Move Model Left</li>
+        <li><strong>Right Grip:</strong> Move Model Right</li>
     </ul>
 </div>
 
@@ -238,6 +476,13 @@
     let models = [...depthAnythingModels]; // Start with DepthAnything models
     let currentModelIndex = 0;
     let currentModel = null; // Keep a reference to the current model
+    let isLocalMode = false; // Track if we're in local file mode
+    let localFiles = []; // Array to store local file URLs
+    let localFilesByType = {
+        depthAnything: [],
+        midas: [],
+        lotus: []
+    }; // Organize local files by model type
     
     // Memory management for large models
     let loadedModels = new Map(); // Cache for loaded models
@@ -245,9 +490,114 @@
     const MAX_CACHED_MODELS = 3; // Limit cached models to prevent memory issues
     let isLoading = false; // Prevent multiple simultaneous loads
 
+    // Global functions for modal interaction
+    window.chooseWebModels = function() {
+        document.getElementById('modelChoiceModal').style.display = 'none';
+        isLocalMode = false;
+        initializeWebMode();
+    };
+
+    window.chooseLocalModels = function() {
+        document.getElementById('fileInputContainer').style.display = 'block';
+        document.querySelector('.modal-buttons').style.display = 'none';
+        document.getElementById('modelTypeSections').style.display = 'block';
+        // Initialize empty arrays for each model type
+        localFilesByType = { depthAnything: [], midas: [], lotus: [] };
+    };
+
+    window.handleFolderSelect = function(event, modelType) {
+        const files = event.target.files;
+        const fileCount = document.getElementById(`${modelType}FileCount`);
+        const filesList = document.getElementById(`${modelType}Files`);
+        const startButton = document.getElementById('startButton');
+        
+        // Clear previous files for this model type
+        localFilesByType[modelType] = [];
+        filesList.innerHTML = '';
+        
+        let validFiles = [];
+        
+        if (files.length > 0) {
+            // First, collect all valid files
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type === 'model/gltf-binary' || file.type === 'model/gltf+json' || 
+                    file.name.toLowerCase().endsWith('.glb') || file.name.toLowerCase().endsWith('.gltf')) {
+                    validFiles.push(file);
+                }
+            }
+            
+            // Sort files by name
+            validFiles.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Now add sorted files to the array
+            validFiles.forEach(file => {
+                const fileUrl = URL.createObjectURL(file);
+                localFilesByType[modelType].push(fileUrl);
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const fileName = document.createElement('span');
+                fileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                
+                fileItem.appendChild(fileName);
+                filesList.appendChild(fileItem);
+            });
+            
+            fileCount.textContent = `${validFiles.length} valid files selected`;
+        } else {
+            fileCount.textContent = 'No files selected';
+        }
+        
+        // Check if we have any files in any model type
+        const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+        startButton.disabled = totalFiles === 0;
+    };
+
+    window.startWithLocalModels = function() {
+        const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+        if (totalFiles > 0) {
+            document.getElementById('modelChoiceModal').style.display = 'none';
+            isLocalMode = true;
+            initializeLocalMode();
+        }
+    };
+
+    function initializeWebMode() {
+        // Show all UI elements for web mode
+        document.getElementById('modelTypeButton').classList.remove('hidden');
+        document.getElementById('modelInfo').classList.remove('hidden');
+        document.getElementById('nextButton').classList.remove('hidden');
+        
+        // Initialize with web models
+        models = [...depthAnythingModels];
+        currentModelType = 'depthAnything';
+        currentModelIndex = 0;
+        
+        // Start loading the first model
+        loadModel(currentModelIndex);
+    }
+
+    function initializeLocalMode() {
+        // Show the model type button for local mode since we now have categorized files
+        document.getElementById('modelTypeButton').classList.remove('hidden');
+        document.getElementById('modelInfo').classList.remove('hidden');
+        document.getElementById('nextButton').classList.remove('hidden');
+        
+        // Use local files as models, starting with DepthAnything
+        models = localFilesByType.depthAnything;
+        currentModelType = 'depthAnything';
+        currentModelIndex = 0;
+        
+        // Start loading the first model
+        loadModel(currentModelIndex);
+    }
+
     function switchModelType() {
         // Store the current index to maintain position across model types
         const currentIndex = currentModelIndex;
+        const oldModelType = currentModelType;
 
         // Remove current model
         if (currentModel) {
@@ -257,13 +607,25 @@
         // Switch model type
         if (currentModelType === 'depthAnything') {
             currentModelType = 'midas';
-            models = [...midasModels];
+            if (isLocalMode) {
+                models = localFilesByType.midas;
+            } else {
+                models = [...midasModels];
+            }
         } else if (currentModelType === 'midas') {
             currentModelType = 'lotus';
-            models = [...lotusModels];
+            if (isLocalMode) {
+                models = localFilesByType.lotus;
+            } else {
+                models = [...lotusModels];
+            }
         } else {
             currentModelType = 'depthAnything';
-            models = [...depthAnythingModels];
+            if (isLocalMode) {
+                models = localFilesByType.depthAnything;
+            } else {
+                models = [...depthAnythingModels];
+            }
         }
 
         // Use the same index position in the new array
@@ -273,6 +635,10 @@
         if (currentModelIndex >= models.length) {
             currentModelIndex = 0;
         }
+
+        console.log(`Switching model type: ${oldModelType} → ${currentModelType}`);
+        console.log(`Models available: ${oldModelType} (${models.length} files)`);
+        console.log(`Index adjustment: ${currentIndex + 1} → ${currentModelIndex + 1} (${models.length} total)`);
 
         loadModel(currentModelIndex);
     }
@@ -285,35 +651,44 @@
             scene.remove(currentModel);
         }
 
+        const oldIndex = currentModelIndex;
         currentModelIndex += direction;
         if (currentModelIndex < 0) currentModelIndex = models.length - 1;
         if (currentModelIndex >= models.length) currentModelIndex = 0;
 
-        // Clear cache when moving to a new model index
-        clearModelCache();
-        console.log(`Cache cleared - moving to new model index: ${currentModelIndex}`);
+        console.log(`Switching model: ${oldIndex + 1} → ${currentModelIndex + 1} (${direction > 0 ? 'next' : 'previous'})`);
+        console.log(`Model type: ${currentModelType}, Total models: ${models.length}`);
+
+        // Clear cache when moving to a new model index (only for web mode)
+        if (!isLocalMode) {
+            clearModelCache();
+            console.log(`Cache cleared - moving to new model index: ${currentModelIndex}`);
+        }
 
         // Load the new model and keep a reference to it
         loadModel(currentModelIndex);
         
-        // Log cache status after switching
-        setTimeout(() => getCacheInfo(), 1000);
+        // Log cache status after switching (only for web mode)
+        if (!isLocalMode) {
+            setTimeout(() => getCacheInfo(), 1000);
+        }
     }
 
-    loadModel(currentModelIndex);
-
-        function loadModel(index) {
+    function loadModel(index) {
         if (isLoading) return;
         isLoading = true;
         
         const modelPath = models[index];
-        const filename = modelPath.split('/').pop();
+        const filename = isLocalMode ? `Local File ${index + 1}` : modelPath.split('/').pop();
         const modelKey = `${currentModelType}_${index}`;
         
         console.log(`Loading ${currentModelType} model at index ${index} (${filename})`);
+        console.log(`Model file: ${filename}`);
+        console.log(`Array position: ${index + 1} of ${models.length} total models`);
+        console.log(`Model type queue: ${currentModelType} (${models.length} models available)`);
         
-        // Check if model is already cached
-        if (loadedModels.has(modelKey)) {
+        // Check if model is already cached (only for web mode)
+        if (!isLocalMode && loadedModels.has(modelKey)) {
             console.log(`Using cached model: ${modelKey}`);
             const cachedModel = loadedModels.get(modelKey);
             currentModel = cachedModel.clone();
@@ -328,7 +703,7 @@
         
         // Show loading indicator
         const modelInfo = document.getElementById('modelInfo');
-        modelInfo.textContent = `Loading ${currentModelType} model...`;
+        modelInfo.textContent = `Loading ${isLocalMode ? 'local' : currentModelType} model...`;
         modelInfo.className = 'model-info loading';
         
         loader.load(modelPath, function (gltf) {
@@ -347,14 +722,16 @@
                 }
             });
 
-            // Cache the loaded model
-            loadedModels.set(modelKey, gltf.scene.clone());
-            
-            // Update access order
-            updateModelAccessOrder(modelKey);
-            
-            // Manage cache size using LRU (Least Recently Used)
-            manageCacheSize();
+            // Cache the loaded model (only for web mode)
+            if (!isLocalMode) {
+                loadedModels.set(modelKey, gltf.scene.clone());
+                
+                // Update access order
+                updateModelAccessOrder(modelKey);
+                
+                // Manage cache size using LRU (Least Recently Used)
+                manageCacheSize();
+            }
 
             // Set current model reference and add to scene
             currentModel = gltf.scene;
@@ -362,20 +739,24 @@
             
             updateModelInfo(index);
             console.log(`✓ Successfully loaded ${currentModelType} model at index ${index}`);
+            console.log(`✓ Model loaded: ${filename} (${index + 1}/${models.length})`);
             isLoading = false;
             
-            // Preload other model types at same index in background
-            setTimeout(preloadOtherModelTypes, 1000);
+            // Preload other model types at same index in background (only for web mode)
+            if (!isLocalMode) {
+                setTimeout(preloadOtherModelTypes, 1000);
+            }
         }, 
         // Progress callback
         function (progress) {
             const percent = Math.round((progress.loaded / progress.total) * 100);
             const modelInfo = document.getElementById('modelInfo');
-            modelInfo.textContent = `Loading ${currentModelType} model... ${percent}%`;
+            modelInfo.textContent = `Loading ${isLocalMode ? 'local' : currentModelType} model... ${percent}%`;
             modelInfo.className = 'model-info loading';
         },
         function (error) {
             console.error(`Error loading ${currentModelType} model at index ${index}:`, error);
+            console.error(`Failed to load: ${filename} (${index + 1}/${models.length})`);
             const modelInfo = document.getElementById('modelInfo');
             modelInfo.textContent = `Error loading model`;
             modelInfo.className = 'model-info error';
@@ -385,7 +766,16 @@
     
     function updateModelInfo(index) {
         let modelTypeDisplay;
-        if (currentModelType === 'depthAnything') {
+        if (isLocalMode) {
+            // For local mode, show the actual depth model type name
+            if (currentModelType === 'depthAnything') {
+                modelTypeDisplay = 'DepthAnything';
+            } else if (currentModelType === 'midas') {
+                modelTypeDisplay = 'MiDaS';
+            } else {
+                modelTypeDisplay = 'Lotus';
+            }
+        } else if (currentModelType === 'depthAnything') {
             modelTypeDisplay = 'DepthAnything';
         } else if (currentModelType === 'midas') {
             modelTypeDisplay = 'MiDaS';
@@ -452,8 +842,57 @@
         }
     }, 10000); // Check every 10 seconds
     
-    // Preload same index from other model types in background
+    // Preload same index from other model types in background (only for web mode)
     function preloadOtherModelTypes() {
+        if (isLocalMode) {
+            // For local mode, preload other model types if they have files (but don't cache)
+            const currentIndex = currentModelIndex;
+            const otherModelTypes = [];
+            
+            if (currentModelType === 'depthAnything') {
+                if (localFilesByType.midas.length > 0) otherModelTypes.push('midas');
+                if (localFilesByType.lotus.length > 0) otherModelTypes.push('lotus');
+            } else if (currentModelType === 'midas') {
+                if (localFilesByType.depthAnything.length > 0) otherModelTypes.push('depthAnything');
+                if (localFilesByType.lotus.length > 0) otherModelTypes.push('lotus');
+            } else if (currentModelType === 'lotus') {
+                if (localFilesByType.depthAnything.length > 0) otherModelTypes.push('depthAnything');
+                if (localFilesByType.midas.length > 0) otherModelTypes.push('midas');
+            }
+            
+            // Preload each other model type at the same index (without caching)
+            otherModelTypes.forEach(modelType => {
+                const modelKey = `${modelType}_${currentIndex}`;
+                
+                if (!isLoading && currentIndex < localFilesByType[modelType].length) {
+                    console.log(`Preloading local ${modelType} model at index ${currentIndex}: ${modelKey}`);
+                    
+                    const modelPath = localFilesByType[modelType][currentIndex];
+                    
+                    loader.load(modelPath, function (gltf) {
+                        gltf.scene.rotation.x = Math.PI;
+                        const zoomScale = 4.2;
+                        
+                        gltf.scene.traverse(function (node) {
+                            if (node.isMesh) {
+                                node.scale.set(zoomScale, zoomScale, 1);
+                                node.material = new THREE.MeshBasicMaterial({
+                                    vertexColors: true,
+                                    transparent: false,
+                                    opacity: 1.0
+                                });
+                                node.frustumCulled = true;
+                            }
+                        });
+                        
+                        // Don't cache local models
+                        console.log(`✓ Preloaded local ${modelType} model: ${modelKey}`);
+                    });
+                }
+            });
+            return;
+        }
+        
         const currentIndex = currentModelIndex;
         
         // Get the other model types
@@ -522,17 +961,19 @@
             changeModel(1); // Next model
         } else if (event.key === 'ArrowLeft') {
             changeModel(-1); // Previous model
-        } else if (event.key === ' ') { // Spacebar to switch model type
+        } else if (event.key === ' ') { // Spacebar to switch model type (now works in both modes)
             switchModelType();
         } else if (event.key === 'c' || event.key === 'C') { // C key to check cache status
             getCacheInfo();
         }
     });
 
-
     let thumbpadRightPressed = false; // Track thumbpad press state
     let thumbpadLeftPressed = false; // Track thumbpad press state
     let leftTriggerPressed = false; // Track left trigger press state
+    let leftGripPressed = false; // Track left grip press state
+    let rightTriggerPressed = false; // Track right trigger press state
+    let rightGripPressed = false; // Track right grip press state
     let leftThumbpadPressed = false; // Track left thumbpad press state for model type switching
     function handleGamepadInput() {
         const session = renderer.xr.getSession();
@@ -573,6 +1014,7 @@
                     const buttons = sourceXR.gamepad.buttons;
                     const axes = sourceXR.gamepad.axes;
                     const triggerButton = buttons[0]; // Usually the trigger is button 0
+                    const gripButton = buttons[1]; // Usually the grip is button 1
                     const thumbpadY = axes[3]; // Left thumbpad Y axis
                     
                     // Left trigger - Move model down
@@ -586,13 +1028,57 @@
                         leftTriggerPressed = false;
                     }
                     
-                    // Left thumbpad up/down - Switch depth model type
+                    // Left grip - Move model up
+                    if (gripButton && gripButton.pressed && !leftGripPressed) {
+                        leftGripPressed = true;
+                        // Move the current model up on Y axis
+                        if (currentModel) {
+                            currentModel.position.y += 0.1; // Adjust this value to control movement speed
+                        }
+                    } else if (gripButton && !gripButton.pressed) {
+                        leftGripPressed = false;
+                    }
+                    
+                    // Left thumbpad up/down - Switch depth model type (works in both modes now)
                     if (thumbpadY >= 0.5 && !leftThumbpadPressed) {
                         leftThumbpadPressed = true;
                         switchModelType(); // Switch between DepthAnything/MiDaS/Lotus
                         console.log('VR: Switched depth model type');
                     } else if (thumbpadY < 0.5) {
                         leftThumbpadPressed = false;
+                    }
+                }
+                
+                // Check for right controller buttons (grip and trigger)
+                if (
+                    sourceXR &&
+                    sourceXR.gamepad &&
+                    sourceXR.handedness === 'right' // Check for the right handedness
+                ) {
+                    const buttons = sourceXR.gamepad.buttons;
+                    const triggerButton = buttons[0]; // Usually the trigger is button 0
+                    const gripButton = buttons[1]; // Usually the grip is button 1
+                    
+                    // Right trigger - Move model sideways left
+                    if (triggerButton && triggerButton.pressed && !rightTriggerPressed) {
+                        rightTriggerPressed = true;
+                        // Move the current model left on X axis
+                        if (currentModel) {
+                            currentModel.position.x -= 0.1; // Adjust this value to control movement speed
+                        }
+                    } else if (triggerButton && !triggerButton.pressed) {
+                        rightTriggerPressed = false;
+                    }
+                    
+                    // Right grip - Move model sideways right
+                    if (gripButton && gripButton.pressed && !rightGripPressed) {
+                        rightGripPressed = true;
+                        // Move the current model right on X axis
+                        if (currentModel) {
+                            currentModel.position.x += 0.1; // Adjust this value to control movement speed
+                        }
+                    } else if (gripButton && !gripButton.pressed) {
+                        rightGripPressed = false;
                     }
                 }
             }
@@ -640,6 +1126,11 @@
 
     document.getElementById('modelTypeButton').addEventListener('click', () => {
         switchModelType();
+    });
+
+    // Show the modal when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('modelChoiceModal').style.display = 'block';
     });
 
     animate();
