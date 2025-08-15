@@ -471,7 +471,7 @@
             <div class="file-input-tabs">
                 <button class="file-input-tab active" onclick="switchFileInputTab('folder')">Folder Selection</button>
                 <button class="file-input-tab" onclick="switchFileInputTab('dragdrop')">Drag & Drop</button>
-                <button class="file-input-tab" onclick="switchFileInputTab('path')">Path Input</button>
+                <button class="file-input-tab" onclick="switchFileInputTab('path')">File Selection</button>
             </div>
             
             <!-- Folder Selection Tab -->
@@ -519,37 +519,37 @@
             <!-- Path Input Tab -->
             <div id="pathTab" class="file-input-tab-content">
                 <div class="path-input-section">
-                    <h4>Enter Folder Paths</h4>
-                    <p style="margin-bottom: 15px; color: #666;">Enter the full paths to folders containing your GLB/GLTF files:</p>
+                    <h4>Select Model Files</h4>
+                    <p style="margin-bottom: 15px; color: #666;">Select individual GLB/GLTF files for each model type:</p>
                     
                     <div class="path-input-group">
-                        <label for="depthAnythingPath">DepthAnything Models Path:</label>
+                        <label for="depthAnythingPath">DepthAnything Models:</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="depthAnythingPath" class="path-input" placeholder="C:\Models\DepthAnything or /home/user/models/depthanything" style="flex: 1;">
-                            <button type="button" onclick="browseDirectory('depthAnything')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                            <input type="text" id="depthAnythingPath" class="path-input" placeholder="Select GLB/GLTF files for DepthAnything models" style="flex: 1;" readonly>
+                            <button type="button" onclick="browseDirectory('depthAnything')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Select Files</button>
                         </div>
-                        <div class="path-help">Enter the full path to the folder containing DepthAnything GLB/GLTF files</div>
+                        <div class="path-help">Click "Select Files" to choose GLB/GLTF files for DepthAnything models</div>
                     </div>
                     
                     <div class="path-input-group">
-                        <label for="midasPath">MiDaS Models Path:</label>
+                        <label for="midasPath">MiDaS Models:</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="midasPath" class="path-input" placeholder="C:\Models\MiDaS or /home/user/models/midas" style="flex: 1;">
-                            <button type="button" onclick="browseDirectory('midas')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                            <input type="text" id="midasPath" class="path-input" placeholder="Select GLB/GLTF files for MiDaS models" style="flex: 1;" readonly>
+                            <button type="button" onclick="browseDirectory('midas')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Select Files</button>
                         </div>
-                        <div class="path-help">Enter the full path to the folder containing MiDaS GLB/GLTF files</div>
+                        <div class="path-help">Click "Select Files" to choose GLB/GLTF files for MiDaS models</div>
                     </div>
                     
                     <div class="path-input-group">
-                        <label for="lotusPath">Lotus Models Path:</label>
+                        <label for="lotusPath">Lotus Models:</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="lotusPath" class="path-input" placeholder="C:\Models\Lotus or /home/user/models/lotus" style="flex: 1;">
-                            <button type="button" onclick="browseDirectory('lotus')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                            <input type="text" id="lotusPath" class="path-input" placeholder="Select GLB/GLTF files for Lotus models" style="flex: 1;" readonly>
+                            <button type="button" onclick="browseDirectory('lotus')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Select Files</button>
                         </div>
-                        <div class="path-help">Enter the full path to the folder containing Lotus GLB/GLTF files</div>
+                        <div class="path-help">Click "Select Files" to choose GLB/GLTF files for Lotus models</div>
                     </div>
                     
-                    <button id="loadFromPathsButton" class="modal-button web-button" style="margin-top: 15px;" onclick="loadFromPaths()">Load from Paths</button>
+
                 </div>
             </div>
             
@@ -921,13 +921,8 @@
         }
     }
 
-    // Browse directory function for individual model types
+    // Browse files function for individual model types
     window.browseDirectory = async function(modelType) {
-        if (!('showDirectoryPicker' in window)) {
-            alert('Directory browsing requires a modern browser with File System Access API support.');
-            return;
-        }
-        
         try {
             const displayNames = {
                 depthAnything: 'DepthAnything Models',
@@ -935,53 +930,70 @@
                 lotus: 'Lotus Models'
             };
             
-            const dirHandle = await window.showDirectoryPicker({
-                title: `Select ${displayNames[modelType]} Folder`
-            });
+            // Create a file input element for selecting GLB files
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.glb,.gltf';
+            fileInput.multiple = true;
+            fileInput.style.display = 'none';
             
-            // Clear previous files for this model type
-            localFilesByType[modelType] = [];
-            
-            const files = [];
-            for await (const entry of dirHandle.values()) {
-                if (entry.kind === 'file') {
-                    const fileName = entry.name.toLowerCase();
-                    if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
-                        const file = await entry.getFile();
-                        const fileUrl = URL.createObjectURL(file);
-                        localFilesByType[modelType].push(fileUrl);
-                        files.push(entry.name);
+            // Handle file selection
+            fileInput.onchange = function(event) {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    // Clear previous files for this model type
+                    localFilesByType[modelType] = [];
+                    
+                    const selectedFiles = [];
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        const fileName = file.name.toLowerCase();
+                        
+                        if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                            const fileUrl = URL.createObjectURL(file);
+                            localFilesByType[modelType].push(fileUrl);
+                            selectedFiles.push(file.name);
+                        }
+                    }
+                    
+                    // Update the path input field with selected file names
+                    const pathInput = document.getElementById(modelType + 'Path');
+                    if (pathInput) {
+                        if (selectedFiles.length === 1) {
+                            pathInput.value = selectedFiles[0];
+                        } else if (selectedFiles.length > 1) {
+                            pathInput.value = `${selectedFiles.length} files selected`;
+                        } else {
+                            pathInput.value = 'No valid files selected';
+                        }
+                    }
+                    
+                    // Update UI
+                    updateFileCounts();
+                    updateFileLists();
+                    document.getElementById('modelTypeSections').style.display = 'block';
+                    
+                    const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+                    document.getElementById('startButton').disabled = totalFiles === 0;
+                    
+                    console.log(`Loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
+                    
+                    if (selectedFiles.length > 0) {
+                        alert(`Successfully loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
                     }
                 }
-            }
+                
+                // Clean up the file input
+                document.body.removeChild(fileInput);
+            };
             
-            // Update the path input field
-            const pathInput = document.getElementById(modelType + 'Path');
-            if (pathInput) {
-                pathInput.value = dirHandle.name || 'Selected Directory';
-            }
-            
-            // Update UI
-            updateFileCounts();
-            updateFileLists();
-            document.getElementById('modelTypeSections').style.display = 'block';
-            
-            const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
-            document.getElementById('startButton').disabled = totalFiles === 0;
-            
-            console.log(`Loaded ${files.length} files from ${displayNames[modelType]} directory`);
-            
-            if (files.length > 0) {
-                alert(`Successfully loaded ${files.length} files from ${displayNames[modelType]} directory`);
-            }
+            // Add file input to DOM and trigger click
+            document.body.appendChild(fileInput);
+            fileInput.click();
             
         } catch (error) {
-            if (error.name === 'AbortError') {
-                console.log('User cancelled directory selection');
-            } else {
-                console.error('Error browsing directory:', error);
-                alert('Error browsing directory. Please try again.');
-            }
+            console.error('Error browsing files:', error);
+            alert('Error browsing files. Please try again.');
         }
     };
 
