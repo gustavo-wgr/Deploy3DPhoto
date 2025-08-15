@@ -220,6 +220,168 @@
             border-radius: 3px;
         }
 
+        .drag-drop-area {
+            border: 2px dashed #2196F3;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background-color: #f0f8ff;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .drag-drop-area.dragover {
+            border-color: #1976D2;
+            background-color: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .drag-drop-area p {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .drag-drop-area .icon {
+            font-size: 48px;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+
+        .path-input-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .path-input-section h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .path-input-group {
+            margin-bottom: 10px;
+        }
+
+        .path-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .path-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .path-input:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+        }
+
+        .path-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .file-input-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .file-input-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .file-input-tab.active {
+            color: #2196F3;
+            border-bottom-color: #2196F3;
+        }
+
+        .file-input-tab-content {
+            display: none;
+        }
+
+        .file-input-tab-content.active {
+            display: block;
+        }
+
+        /* VR-friendly improvements */
+        @media (max-width: 768px), (pointer: coarse) {
+            .modal-content {
+                width: 90%;
+                margin: 2% auto;
+                padding: 20px;
+            }
+            
+            .file-input-tab {
+                padding: 15px 20px;
+                font-size: 16px;
+                min-height: 44px; /* Touch-friendly minimum size */
+            }
+            
+            .drag-drop-area {
+                padding: 40px 20px;
+                min-height: 200px;
+            }
+            
+            .path-input {
+                padding: 12px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+            
+            .modal-button {
+                padding: 15px 30px;
+                font-size: 18px;
+                min-height: 44px;
+            }
+            
+            .start-button {
+                padding: 15px 30px;
+                font-size: 18px;
+                min-height: 44px;
+            }
+        }
+
+        /* VR-specific styles */
+        .vr-mode .modal-content {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .vr-mode .file-input-tab {
+            font-size: 18px;
+            padding: 20px 25px;
+        }
+        
+        .vr-mode .drag-drop-area {
+            font-size: 18px;
+            padding: 50px 30px;
+        }
+        
+        .vr-mode .path-input {
+            font-size: 18px;
+            padding: 15px;
+        }
+
         .file-list {
             margin-top: 15px;
             text-align: left;
@@ -306,25 +468,88 @@
         </div>
         
         <div id="fileInputContainer" class="file-input-container">
-            <p>Select folders containing GLB/GLTF files for each depth model type:</p>
+            <div class="file-input-tabs">
+                <button class="file-input-tab active" onclick="switchFileInputTab('folder')">Folder Selection</button>
+                <button class="file-input-tab" onclick="switchFileInputTab('dragdrop')">Drag & Drop</button>
+                <button class="file-input-tab" onclick="switchFileInputTab('path')">Path Input</button>
+            </div>
             
-            <div class="folder-selection">
-                <div class="folder-input-group">
-                    <label for="depthAnythingFolder">DepthAnything Models Folder:</label>
-                    <input type="file" id="depthAnythingFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'depthAnything')">
-                    <div id="depthAnythingFileCount" class="file-count"></div>
-                </div>
+            <!-- Folder Selection Tab -->
+            <div id="folderTab" class="file-input-tab-content active">
+                <p>Select folders containing GLB/GLTF files for each depth model type:</p>
                 
-                <div class="folder-input-group">
-                    <label for="midasFolder">MiDaS Models Folder:</label>
-                    <input type="file" id="midasFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'midas')">
-                    <div id="midasFileCount" class="file-count"></div>
+                <div class="folder-selection">
+                    <div class="folder-input-group">
+                        <label for="depthAnythingFolder">DepthAnything Models Folder:</label>
+                        <input type="file" id="depthAnythingFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'depthAnything')">
+                        <div id="depthAnythingFileCount" class="file-count"></div>
+                    </div>
+                    
+                    <div class="folder-input-group">
+                        <label for="midasFolder">MiDaS Models Folder:</label>
+                        <input type="file" id="midasFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'midas')">
+                        <div id="midasFileCount" class="file-count"></div>
+                    </div>
+                    
+                    <div class="folder-input-group">
+                        <label for="lotusFolder">Lotus Models Folder:</label>
+                        <input type="file" id="lotusFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'lotus')">
+                        <div id="lotusFileCount" class="file-count"></div>
+                    </div>
                 </div>
-                
-                <div class="folder-input-group">
-                    <label for="lotusFolder">Lotus Models Folder:</label>
-                    <input type="file" id="lotusFolder" class="folder-input" webkitdirectory directory multiple onchange="handleFolderSelect(event, 'lotus')">
-                    <div id="lotusFileCount" class="file-count"></div>
+            </div>
+            
+            <!-- Drag & Drop Tab -->
+            <div id="dragdropTab" class="file-input-tab-content">
+                <div class="drag-drop-area" id="dragDropArea">
+                    <div class="icon">📁</div>
+                    <p><strong>Drag and drop your GLB/GLTF files here</strong></p>
+                    <p>or click to browse files</p>
+                    <input type="file" id="dragDropInput" multiple accept=".glb,.gltf" style="display: none;">
+                </div>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    <strong>Note:</strong> Files will be automatically categorized based on their names. 
+                    Files containing "depth", "anything", or "dpt" will be assigned to DepthAnything models.
+                    Files containing "midas" will be assigned to MiDaS models.
+                    Files containing "lotus" will be assigned to Lotus models.
+                    Other files will be assigned to DepthAnything by default.
+                </p>
+            </div>
+            
+            <!-- Path Input Tab -->
+            <div id="pathTab" class="file-input-tab-content">
+                <div class="path-input-section">
+                    <h4>Enter Folder Paths</h4>
+                    <p style="margin-bottom: 15px; color: #666;">Enter the full paths to folders containing your GLB/GLTF files:</p>
+                    
+                    <div class="path-input-group">
+                        <label for="depthAnythingPath">DepthAnything Models Path:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="depthAnythingPath" class="path-input" placeholder="C:\Models\DepthAnything or /home/user/models/depthanything" style="flex: 1;">
+                            <button type="button" onclick="browseDirectory('depthAnything')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                        </div>
+                        <div class="path-help">Enter the full path to the folder containing DepthAnything GLB/GLTF files</div>
+                    </div>
+                    
+                    <div class="path-input-group">
+                        <label for="midasPath">MiDaS Models Path:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="midasPath" class="path-input" placeholder="C:\Models\MiDaS or /home/user/models/midas" style="flex: 1;">
+                            <button type="button" onclick="browseDirectory('midas')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                        </div>
+                        <div class="path-help">Enter the full path to the folder containing MiDaS GLB/GLTF files</div>
+                    </div>
+                    
+                    <div class="path-input-group">
+                        <label for="lotusPath">Lotus Models Path:</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="lotusPath" class="path-input" placeholder="C:\Models\Lotus or /home/user/models/lotus" style="flex: 1;">
+                            <button type="button" onclick="browseDirectory('lotus')" style="padding: 8px 12px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer;">Browse</button>
+                        </div>
+                        <div class="path-help">Enter the full path to the folder containing Lotus GLB/GLTF files</div>
+                    </div>
+                    
+                    <button id="loadFromPathsButton" class="modal-button web-button" style="margin-top: 15px;" onclick="loadFromPaths()">Load from Paths</button>
                 </div>
             </div>
             
@@ -504,6 +729,304 @@
         // Initialize empty arrays for each model type
         localFilesByType = { depthAnything: [], midas: [], lotus: [] };
     };
+
+    // Tab switching function
+    window.switchFileInputTab = function(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.file-input-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.file-input-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show selected tab content
+        document.getElementById(tabName + 'Tab').classList.add('active');
+        
+        // Add active class to selected tab
+        event.target.classList.add('active');
+    };
+
+    // Drag and drop functionality
+    window.setupDragAndDrop = function() {
+        const dragDropArea = document.getElementById('dragDropArea');
+        const dragDropInput = document.getElementById('dragDropInput');
+        
+        // Click to browse files
+        dragDropArea.addEventListener('click', () => {
+            dragDropInput.click();
+        });
+        
+        // Drag and drop events
+        dragDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.add('dragover');
+        });
+        
+        dragDropArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+        });
+        
+        dragDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            handleDragDropFiles(files);
+        });
+        
+        // File input change
+        dragDropInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleDragDropFiles(files);
+        });
+    };
+
+    // Handle files dropped or selected via drag and drop
+    window.handleDragDropFiles = function(files) {
+        // Clear previous files
+        localFilesByType = { depthAnything: [], midas: [], lotus: [] };
+        
+        // Categorize files based on their names
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileName = file.name.toLowerCase();
+            
+            // Check if it's a valid GLB/GLTF file
+            if (file.type === 'model/gltf-binary' || file.type === 'model/gltf+json' || 
+                fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                
+                const fileUrl = URL.createObjectURL(file);
+                
+                // Categorize based on filename
+                if (fileName.includes('midas')) {
+                    localFilesByType.midas.push(fileUrl);
+                } else if (fileName.includes('lotus')) {
+                    localFilesByType.lotus.push(fileUrl);
+                } else if (fileName.includes('depth') || fileName.includes('anything') || fileName.includes('dpt')) {
+                    localFilesByType.depthAnything.push(fileUrl);
+                } else {
+                    // Default to DepthAnything
+                    localFilesByType.depthAnything.push(fileUrl);
+                }
+            }
+        }
+        
+        // Update the file count displays
+        updateFileCounts();
+        
+        // Show the model type sections
+        document.getElementById('modelTypeSections').style.display = 'block';
+        
+        // Update the file lists
+        updateFileLists();
+        
+        // Enable/disable start button
+        const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+        document.getElementById('startButton').disabled = totalFiles === 0;
+        
+        if (totalFiles > 0) {
+            alert(`Successfully loaded ${totalFiles} files:\n- DepthAnything: ${localFilesByType.depthAnything.length}\n- MiDaS: ${localFilesByType.midas.length}\n- Lotus: ${localFilesByType.lotus.length}`);
+        }
+    };
+
+    // Path input functionality
+    window.loadFromPaths = function() {
+        const depthAnythingPath = document.getElementById('depthAnythingPath').value.trim();
+        const midasPath = document.getElementById('midasPath').value.trim();
+        const lotusPath = document.getElementById('lotusPath').value.trim();
+        
+        if (!depthAnythingPath && !midasPath && !lotusPath) {
+            alert('Please enter at least one folder path.');
+            return;
+        }
+        
+        // Try to use File System Access API if available
+        if ('showDirectoryPicker' in window) {
+            loadFromPathsWithFileSystemAPI();
+        } else {
+            alert('Path-based loading requires a modern browser with File System Access API support. Please use the Drag & Drop or Folder Selection options instead.');
+        }
+    };
+
+    // Load files using File System Access API
+    async function loadFromPathsWithFileSystemAPI() {
+        try {
+            // Clear previous files
+            localFilesByType = { depthAnything: [], midas: [], lotus: [] };
+            
+            // Show directory picker for each model type
+            const depthAnythingPath = document.getElementById('depthAnythingPath').value.trim();
+            const midasPath = document.getElementById('midasPath').value.trim();
+            const lotusPath = document.getElementById('lotusPath').value.trim();
+            
+            if (depthAnythingPath) {
+                await loadFilesFromDirectory('depthAnything', 'DepthAnything Models');
+            }
+            if (midasPath) {
+                await loadFilesFromDirectory('midas', 'MiDaS Models');
+            }
+            if (lotusPath) {
+                await loadFilesFromDirectory('lotus', 'Lotus Models');
+            }
+            
+            // Update UI
+            updateFileCounts();
+            updateFileLists();
+            document.getElementById('modelTypeSections').style.display = 'block';
+            
+            const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+            document.getElementById('startButton').disabled = totalFiles === 0;
+            
+            if (totalFiles > 0) {
+                alert(`Successfully loaded ${totalFiles} files:\n- DepthAnything: ${localFilesByType.depthAnything.length}\n- MiDaS: ${localFilesByType.midas.length}\n- Lotus: ${localFilesByType.lotus.length}`);
+            }
+            
+        } catch (error) {
+            console.error('Error loading files from paths:', error);
+            alert('Error loading files. Please try using the Drag & Drop option instead.');
+        }
+    }
+
+    // Load files from a directory using File System Access API
+    async function loadFilesFromDirectory(modelType, displayName) {
+        try {
+            const dirHandle = await window.showDirectoryPicker({
+                title: `Select ${displayName} Folder`
+            });
+            
+            const files = [];
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const fileName = entry.name.toLowerCase();
+                    if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                        const file = await entry.getFile();
+                        const fileUrl = URL.createObjectURL(file);
+                        localFilesByType[modelType].push(fileUrl);
+                        files.push(entry.name);
+                    }
+                }
+            }
+            
+            console.log(`Loaded ${files.length} files from ${displayName} directory`);
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('User cancelled directory selection');
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    // Browse directory function for individual model types
+    window.browseDirectory = async function(modelType) {
+        if (!('showDirectoryPicker' in window)) {
+            alert('Directory browsing requires a modern browser with File System Access API support.');
+            return;
+        }
+        
+        try {
+            const displayNames = {
+                depthAnything: 'DepthAnything Models',
+                midas: 'MiDaS Models',
+                lotus: 'Lotus Models'
+            };
+            
+            const dirHandle = await window.showDirectoryPicker({
+                title: `Select ${displayNames[modelType]} Folder`
+            });
+            
+            // Clear previous files for this model type
+            localFilesByType[modelType] = [];
+            
+            const files = [];
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const fileName = entry.name.toLowerCase();
+                    if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                        const file = await entry.getFile();
+                        const fileUrl = URL.createObjectURL(file);
+                        localFilesByType[modelType].push(fileUrl);
+                        files.push(entry.name);
+                    }
+                }
+            }
+            
+            // Update the path input field
+            const pathInput = document.getElementById(modelType + 'Path');
+            if (pathInput) {
+                pathInput.value = dirHandle.name || 'Selected Directory';
+            }
+            
+            // Update UI
+            updateFileCounts();
+            updateFileLists();
+            document.getElementById('modelTypeSections').style.display = 'block';
+            
+            const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+            document.getElementById('startButton').disabled = totalFiles === 0;
+            
+            console.log(`Loaded ${files.length} files from ${displayNames[modelType]} directory`);
+            
+            if (files.length > 0) {
+                alert(`Successfully loaded ${files.length} files from ${displayNames[modelType]} directory`);
+            }
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('User cancelled directory selection');
+            } else {
+                console.error('Error browsing directory:', error);
+                alert('Error browsing directory. Please try again.');
+            }
+        }
+    };
+
+    // Helper function to update file counts
+    function updateFileCounts() {
+        document.getElementById('depthAnythingFileCount').textContent = 
+            `${localFilesByType.depthAnything.length} files selected`;
+        document.getElementById('midasFileCount').textContent = 
+            `${localFilesByType.midas.length} files selected`;
+        document.getElementById('lotusFileCount').textContent = 
+            `${localFilesByType.lotus.length} files selected`;
+    }
+
+    // Helper function to update file lists
+    function updateFileLists() {
+        // Update DepthAnything files
+        const depthAnythingFiles = document.getElementById('depthAnythingFiles');
+        depthAnythingFiles.innerHTML = '';
+        localFilesByType.depthAnything.forEach((fileUrl, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.textContent = `File ${index + 1}`;
+            depthAnythingFiles.appendChild(fileItem);
+        });
+        
+        // Update MiDaS files
+        const midasFiles = document.getElementById('midasFiles');
+        midasFiles.innerHTML = '';
+        localFilesByType.midas.forEach((fileUrl, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.textContent = `File ${index + 1}`;
+            midasFiles.appendChild(fileItem);
+        });
+        
+        // Update Lotus files
+        const lotusFiles = document.getElementById('lotusFiles');
+        lotusFiles.innerHTML = '';
+        localFilesByType.lotus.forEach((fileUrl, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.textContent = `File ${index + 1}`;
+            lotusFiles.appendChild(fileItem);
+        });
+    }
 
     window.handleFolderSelect = function(event, modelType) {
         const files = event.target.files;
@@ -1131,6 +1654,23 @@
     // Show the modal when the page loads
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modelChoiceModal').style.display = 'block';
+        // Initialize drag and drop functionality
+        setupDragAndDrop();
+        
+        // Detect VR mode and apply appropriate styles
+        if (navigator.userAgent.includes('Quest') || navigator.userAgent.includes('Oculus') || 
+            window.innerWidth > 2000 || window.innerHeight > 2000) {
+            document.body.classList.add('vr-mode');
+        }
+        
+        // Also detect when entering VR session
+        renderer.xr.addEventListener('sessionstart', function() {
+            document.body.classList.add('vr-mode');
+        });
+        
+        renderer.xr.addEventListener('sessionend', function() {
+            document.body.classList.remove('vr-mode');
+        });
     });
 
     animate();
