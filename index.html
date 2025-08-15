@@ -923,13 +923,88 @@
 
     // Browse files function for individual model types
     window.browseDirectory = async function(modelType) {
+        const displayNames = {
+            depthAnything: 'DepthAnything Models',
+            midas: 'MiDaS Models',
+            lotus: 'Lotus Models'
+        };
+        
+        // Try File System Access API first (works on Quest 2)
+        if ('showOpenFilePicker' in window) {
+            try {
+                const fileHandles = await window.showOpenFilePicker({
+                    title: `Select ${displayNames[modelType]} Files`,
+                    multiple: true,
+                    types: [
+                        {
+                            description: '3D Model Files',
+                            accept: {
+                                'model/gltf-binary': ['.glb'],
+                                'model/gltf+json': ['.gltf']
+                            }
+                        }
+                    ]
+                });
+                
+                // Clear previous files for this model type
+                localFilesByType[modelType] = [];
+                
+                const selectedFiles = [];
+                for (const fileHandle of fileHandles) {
+                    const file = await fileHandle.getFile();
+                    const fileName = file.name.toLowerCase();
+                    
+                    if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                        const fileUrl = URL.createObjectURL(file);
+                        localFilesByType[modelType].push(fileUrl);
+                        selectedFiles.push(file.name);
+                    }
+                }
+                
+                // Update the path input field with selected file names
+                const pathInput = document.getElementById(modelType + 'Path');
+                if (pathInput) {
+                    if (selectedFiles.length === 1) {
+                        pathInput.value = selectedFiles[0];
+                    } else if (selectedFiles.length > 1) {
+                        pathInput.value = `${selectedFiles.length} files selected`;
+                    } else {
+                        pathInput.value = 'No valid files selected';
+                    }
+                }
+                
+                // Update UI
+                updateFileCounts();
+                updateFileLists();
+                document.getElementById('modelTypeSections').style.display = 'block';
+                
+                const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
+                document.getElementById('startButton').disabled = totalFiles === 0;
+                
+                console.log(`Loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
+                
+                if (selectedFiles.length > 0) {
+                    alert(`Successfully loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
+                }
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('User cancelled file selection');
+                } else {
+                    console.error('Error with File System Access API:', error);
+                    // Fallback to standard file input
+                    fallbackToStandardFileInput(modelType, displayNames[modelType]);
+                }
+            }
+        } else {
+            // Fallback to standard file input for browsers without File System Access API
+            fallbackToStandardFileInput(modelType, displayNames[modelType]);
+        }
+    };
+    
+    // Fallback function using standard file input
+    function fallbackToStandardFileInput(modelType, displayName) {
         try {
-            const displayNames = {
-                depthAnything: 'DepthAnything Models',
-                midas: 'MiDaS Models',
-                lotus: 'Lotus Models'
-            };
-            
             // Create a file input element for selecting GLB files
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -976,10 +1051,10 @@
                     const totalFiles = localFilesByType.depthAnything.length + localFilesByType.midas.length + localFilesByType.lotus.length;
                     document.getElementById('startButton').disabled = totalFiles === 0;
                     
-                    console.log(`Loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
+                    console.log(`Loaded ${selectedFiles.length} files for ${displayName}`);
                     
                     if (selectedFiles.length > 0) {
-                        alert(`Successfully loaded ${selectedFiles.length} files for ${displayNames[modelType]}`);
+                        alert(`Successfully loaded ${selectedFiles.length} files for ${displayName}`);
                     }
                 }
                 
@@ -992,10 +1067,10 @@
             fileInput.click();
             
         } catch (error) {
-            console.error('Error browsing files:', error);
+            console.error('Error with fallback file input:', error);
             alert('Error browsing files. Please try again.');
         }
-    };
+    }
 
     // Helper function to update file counts
     function updateFileCounts() {
